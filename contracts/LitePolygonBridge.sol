@@ -27,7 +27,7 @@ contract LitePolygonBridge is FxBaseChildTunnel, Const {
 
     // IChildChainManager manager;
     mapping(address => bool) rebalancer;
-    mapping(address => address) iTokenList;
+    // mapping(address => address) iTokenList;
 
     event Key(bytes32 key);
 
@@ -45,9 +45,12 @@ contract LitePolygonBridge is FxBaseChildTunnel, Const {
         // latestData = data;
         (bytes32 key, bytes memory _dataFromRoot) = abi.decode(data, (bytes32, bytes));
         if(key == UPDATE_PRICE) {
-            (address underlyingToken_, uint256 amount_) = abi.decode(_dataFromRoot, (address, uint256));
+            ExchangePrice[] memory list = abi.decode(_dataFromRoot, (ExchangePrice[]));
             // withdrawBalance[token] += amount;
-            IIToken(getItoken(underlyingToken_)).updateExchangePrice(amount_);
+            uint256 len = list.length;
+            for (uint256 i = 0; i < len; i++) {
+                IIToken(list[i].polygonVault).updateExchangePrice(list[i].exchangePrice);
+            }
         }
 
         emit Key(key);
@@ -59,14 +62,14 @@ contract LitePolygonBridge is FxBaseChildTunnel, Const {
 
     function deposit(address iToken) external {
         require(rebalancer[msg.sender], "no permission");
-        iTokenList[IIToken(iToken).UNDERLYING_TOKEN()] = iToken;
+        // iTokenList[IIToken(iToken).UNDERLYING_TOKEN()] = iToken;
         uint256 _amount = IIToken(iToken).depositToMainnet();
         IChildChainManager(IIToken(iToken).UNDERLYING_TOKEN()).withdraw(_amount);
     }
 
-    function getItoken(address underlyingToken_) public view returns(address iToken) {
-        iToken = iTokenList[underlyingToken_];
-    }
+    // function getItoken(address underlyingToken_) public view returns(address iToken) {
+    //     iToken = iTokenList[underlyingToken_];
+    // }
 
     function setRebalancer(address _account, bool flag) external {
         require(msg.sender == owner, "no permission");

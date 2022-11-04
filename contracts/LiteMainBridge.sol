@@ -6,11 +6,13 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./lib/IRootChainManager.sol";
 
 interface IToken {
-    function updateExchangePrice(uint256 exchangePrice_) external;
     function deposit(uint256 amount_) external;
     function withdrawFromMainnet() external;
     function depositForETH() external payable;
     function withdrawForETH() external;
+    function approve(address spender, uint256 amount) external;
+    function updateExchangePrice() external view returns(uint256);
+    function iChildToken() external view returns(address);
 }
 
 /**
@@ -18,9 +20,9 @@ interface IToken {
  */
 contract LiteMainBridge is FxBaseRootTunnel {
     mapping(address => address) iTokenList;
+    address[] iTokenArr;
 
     event Key(bytes32 key, bytes data);
-    event Withdraw(address token, uint256 amount);
 
     // constructor(address _checkpointManager, address _fxRoot, address _bridge) FxBaseRootTunnel(_checkpointManager, _fxRoot, _bridge) {
     // }
@@ -28,15 +30,28 @@ contract LiteMainBridge is FxBaseRootTunnel {
     function _processMessageFromChild(bytes memory message) internal override {
         (bytes32 key, bytes memory data) = abi.decode(message, (bytes32, bytes));
         if(key == WITHDRAW_TOKEN) {
-            (address childToken, uint256 amount) = abi.decode(data, (address, uint256));
-            // if(predicateETH == predicateAddress)
-            //     payable(account).transfer(amount);
-            // else
-            //     IERC20(predicateAddress).transfer(account, amount);
-            _sendMessageToChild(abi.encode(UPDATE_PRICE, abi.encode(childToken, amount)));
-            emit Withdraw(childToken, amount);
+            (address rootToken, address iChildToken, address predicateAddress, uint256 amount) = abi.decode(data, (address, address, address, uint256));
+            address iRootToken = getItoken(rootToken);
+            if(predicateETH == predicateAddress) {
+                IToken(iRootToken).depositForETH{value: amount}();
+            } else {
+                IERC20(rootToken).approve(iRootToken, amount);
+                IToken(iRootToken).deposit(amount);
+            }
+            // _sendMessageToChild(abi.encode(UPDATE_PRICE, abi.encode(childToken, amount)));
         }
         emit Key(key, data);
+    }
+
+    function sendMessageToChild() external {
+        uint256 len = iTokenArr.length;
+        ExchangePrice[] memory price = new ExchangePrice[](len);
+        for(uint256 i = 0; i < len; i++) {
+            price[i].exchangePrice = IToken(iTokenArr[i]).updateExchangePrice();
+            price[i].mainnetVault = iTokenArr[i];
+            price[i].polygonVault = IToken(iTokenArr[i]).iChildToken();
+        }
+        _sendMessageToChild(abi.encode(UPDATE_PRICE, abi.encode(price)));
     }
 
     function _depositFor(
@@ -65,7 +80,10 @@ contract LiteMainBridge is FxBaseRootTunnel {
     function setItoken(address[] memory underlyingToken_, address[] memory iToken_) external {
         require(underlyingToken_.length == iToken_.length, "not match");
         for(uint256 i = 0; i < underlyingToken_.length; i++) {
-            iTokenList[underlyingToken_[i]] = iToken_[i];
+            if(iTokenList[underlyingToken_[i]] == address(0)) {
+                iTokenArr.push(iToken_[i]);
+                iTokenList[underlyingToken_[i]] = iToken_[i];
+            }
         }
     }
 

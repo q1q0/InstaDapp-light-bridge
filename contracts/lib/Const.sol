@@ -7,4 +7,10 @@ contract Const {
     bytes32 public constant DEPOSIT = keccak256("DEPOSIT");
     bytes32 public constant MAP_TOKEN = keccak256("MAP_TOKEN");
     bytes32 public constant WITHDRAW_TOKEN = keccak256("WITHDRAW_TOKEN");
+    
+    struct ExchangePrice {
+       address mainnetVault;
+       address polygonVault;
+       uint256 exchangePrice;
+    }
 }

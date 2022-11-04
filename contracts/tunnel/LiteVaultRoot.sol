@@ -6,18 +6,16 @@ pragma solidity ^0.8.11;
 import "../lib/IToken.sol";
 
 contract BridgeModule is Variables{
+    address public iChildToken;
     constructor(string memory name_, string memory symbol_, address underlyingToken_) 
     Variables(name_, symbol_, underlyingToken_) {
 
     }
 
-    function updateExchangePrice(uint256 exchangePrice_) public {
+    function updateExchangePrice() public view returns(uint256) {
         require(msg.sender == liteBridgeContract, "not-bridge-contract");
-        require(exchangePrice_ >= exchangePrice);
-
-        exchangePrice = exchangePrice_;
-
-        // Event is emitted
+        // add some updateExchange logic
+        return exchangePrice;
     }
 
     function deposit(uint256 amount_) public {
@@ -46,6 +44,10 @@ contract BridgeModule is Variables{
         uint256 balance = address(this).balance;
         payable(msg.sender).transfer(balance);
         _burn(msg.sender, balance);
+    }
+
+    function setIChildToken(address childToken_) external onlyOwner {
+        iChildToken = childToken_;
     }
 
 }

@@ -9,7 +9,6 @@
     "deploy-deter": "npx hardhat run --network goerli scripts/deployDetermin.ts",
     "deploy-deter-mum": "npx hardhat run --network mumbai scripts/deployDetermin.ts",
     "deploy-child": "npx hardhat run --network mumbai scripts/deploychild.ts",
-    "deploy-root": "npx hardhat run --network goerli scripts/deployroot.ts",
     "deploy-itoken-child": "npx hardhat run --network mumbai scripts/deploychild_itoken.ts",
     "deploy-itoken-root": "npx hardhat run --network goerli scripts/deployroot_itoken.ts"
   },
