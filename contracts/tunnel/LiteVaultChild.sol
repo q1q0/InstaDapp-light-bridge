@@ -1,27 +1,13 @@
-
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.11;
 
 // @title Polygon Lite vault
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
-contract Variables is ERC20 {
-    using SafeERC20 for IERC20;
-
-    uint256 internal exchangePrice = 1e18;
-    IERC20 immutable UNDERLYING_TOKEN;
-    address liteBridgeContract;
-
-    constructor(string memory name_, string memory symbol_, address underlyingToken_, address liteBridgeContract_) ERC20(name_, symbol_){
-        UNDERLYING_TOKEN = IERC20(underlyingToken_);
-        liteBridgeContract = liteBridgeContract_;
-    }
-}
+import "../lib/IToken.sol";
 
 contract BridgeModule is Variables{
-    constructor(string memory name_, string memory symbol_, address underlyingToken_,  address liteBridgeContract_) Variables(name_, symbol_, underlyingToken_) {
+    constructor(string memory name_, string memory symbol_, address underlyingToken_) 
+    Variables(name_, symbol_, underlyingToken_) {
 
     }
 
@@ -34,10 +20,10 @@ contract BridgeModule is Variables{
         // Event is emitted
     }
 
-    function depositToMainnet() public {
+    function depositToMainnet() public returns(uint256 amount) {
         require(msg.sender == liteBridgeContract, "not-bridge-contract");
-       
-        UNDERLYING_TOKEN.transfer(liteBridgeContract, UNDERLYING_TOKEN.balanceOf(address(this)) * 9 / 10); // Sends only 90% of the funds
+        amount = UNDERLYING_TOKEN.balanceOf(address(this)) * 9 / 10;
+        UNDERLYING_TOKEN.transfer(liteBridgeContract, amount); // Sends only 90% of the funds
         // Event is emitted
     }
 
@@ -51,8 +37,10 @@ contract BridgeModule is Variables{
 }
 
 contract UserModule is BridgeModule {
-
-    constructor(string memory name_, string memory symbol_, address underlyingToken_,  address liteBridgeContract_) BridgeModule(name_, symbol_, underlyingToken_, liteBridgeContract_) {
+    using SafeERC20 for IERC20;
+    
+    constructor(string memory name_, string memory symbol_, address underlyingToken_) 
+    BridgeModule(name_, symbol_, underlyingToken_) {
         
     }
 
@@ -78,8 +66,9 @@ contract UserModule is BridgeModule {
 
 }
 
-contract LiteVault is UserModule {
-    constructor(string memory name_, string memory symbol_, address underlyingToken_,  address liteBridgeContract_) UserModule(name_, symbol_, underlyingToken_, liteBridgeContract_) {
+contract LiteVaultChild is UserModule {
+    constructor(string memory name_, string memory symbol_, address underlyingToken_) 
+    UserModule(name_, symbol_, underlyingToken_) {
         
     }
 
