@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {FxBaseChildTunnel} from "./tunnel/FxBaseChildTunnel.sol";
 import "./lib/Const.sol";
+import "./lib/IERC20.sol";
 
 interface IChildChainManager {
     function withdraw(uint256 amount) external;
@@ -40,16 +41,20 @@ contract LitePolygonBridge is FxBaseChildTunnel, Const {
         address sender,
         bytes memory data
     ) internal override validateSender(sender) {
-        // latestStateId = stateId;
-        // latestRootMessageSender = sender;
-        // latestData = data;
         (bytes32 key, bytes memory _dataFromRoot) = abi.decode(data, (bytes32, bytes));
         if(key == UPDATE_PRICE) {
             ExchangePrice[] memory list = abi.decode(_dataFromRoot, (ExchangePrice[]));
-            // withdrawBalance[token] += amount;
             uint256 len = list.length;
             for (uint256 i = 0; i < len; i++) {
                 IIToken(list[i].polygonVault).updateExchangePrice(list[i].exchangePrice);
+            }
+        } else if(key == WITHDRAW_TOKEN) {
+            Withdraw[] memory list = abi.decode(_dataFromRoot, (Withdraw[]));
+            uint256 len = list.length;
+            for (uint256 i = 0; i < len; i++) {
+                address underlyingToken = IIToken(list[i].iChildToken).UNDERLYING_TOKEN();
+                IERC20(underlyingToken).approve(list[i].iChildToken, list[i].amount);
+                IIToken(list[i].iChildToken).withdrawFromMainnet(list[i].amount);
             }
         }
 
@@ -61,7 +66,7 @@ contract LitePolygonBridge is FxBaseChildTunnel, Const {
     }
 
     function deposit(address iToken) external {
-        require(rebalancer[msg.sender], "no permission");
+        require(rebalancer[msg.sender] || owner == msg.sender, "no permission");
         // iTokenList[IIToken(iToken).UNDERLYING_TOKEN()] = iToken;
         uint256 _amount = IIToken(iToken).depositToMainnet();
         IChildChainManager(IIToken(iToken).UNDERLYING_TOKEN()).withdraw(_amount);

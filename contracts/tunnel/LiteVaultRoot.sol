@@ -7,12 +7,8 @@ import "../lib/IToken.sol";
 
 contract BridgeModule is Variables{
     address public iChildToken;
-    constructor(string memory name_, string memory symbol_, address underlyingToken_) 
-    Variables(name_, symbol_, underlyingToken_) {
 
-    }
-
-    function updateExchangePrice() public view returns(uint256) {
+    function getExchangePrice() public view returns(uint256) {
         require(msg.sender == liteBridgeContract, "not-bridge-contract");
         // add some updateExchange logic
         return exchangePrice;
@@ -26,11 +22,19 @@ contract BridgeModule is Variables{
         // Event is emitted
     }
 
-    function withdrawFromMainnet() public {
+    function withdraw() public returns(address, uint256) {
         require(msg.sender == liteBridgeContract, "not-bridge-contract");
-       
-        UNDERLYING_TOKEN.transfer(liteBridgeContract, UNDERLYING_TOKEN.balanceOf(address(this)));
-        _burn(msg.sender, UNDERLYING_TOKEN.balanceOf(address(this)));
+        if(isIETHContract) {
+            uint256 balance = address(this).balance;
+            payable(msg.sender).transfer(balance);
+            _burn(msg.sender, balance);
+            return (address(0), balance);
+        } else {
+            UNDERLYING_TOKEN.transfer(liteBridgeContract, UNDERLYING_TOKEN.balanceOf(address(this)));
+            uint256 balance = UNDERLYING_TOKEN.balanceOf(address(this));
+            _burn(msg.sender, balance);
+            return (address(UNDERLYING_TOKEN), balance);
+        }
         // Event is emitted
     }
 
@@ -39,23 +43,13 @@ contract BridgeModule is Variables{
         _mint(msg.sender, msg.value);
     }
 
-    function withdrawForETH() public {
-        require(msg.sender == liteBridgeContract, "not-bridge-contract");
-        uint256 balance = address(this).balance;
-        payable(msg.sender).transfer(balance);
-        _burn(msg.sender, balance);
-    }
-
-    function setIChildToken(address childToken_) external onlyOwner {
+    function setIChildToken(address childToken_) external {
+        require(owner == msg.sender, "no permission");
         iChildToken = childToken_;
     }
 
 }
 
 contract LiteVaultRoot is BridgeModule {
-    constructor(string memory name_, string memory symbol_, address underlyingToken_) 
-    BridgeModule(name_, symbol_, underlyingToken_) {
-        
-    }
 
 } 

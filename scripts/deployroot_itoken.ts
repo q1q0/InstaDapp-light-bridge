@@ -2,6 +2,7 @@ import '@nomiclabs/hardhat-ethers'
 import { ethers } from 'hardhat'
 import * as dotenv from "dotenv";
 import * as config  from "../config/config.json";
+import { upgrades } from "hardhat"
 
 dotenv.config();
 
@@ -22,30 +23,20 @@ async function main() {
 
   for(let i = 0; i < tokenList.length; i++) {
     const ERC20 = await ethers.getContractFactory("LiteVaultRoot");
-    const erc20 = await ERC20.deploy(tokenList[i].name, tokenList[i].symbol, tokenList[i].underlyingToken);  
-    await erc20.deployed();
+    const owner = "0x027814f84608EDdbaAE145778A55651079E2b52d";
+    let erc20 = await upgrades.deployProxy(ERC20, [owner, tokenList[i].name, tokenList[i].symbol, tokenList[i].decimal, tokenList[i].underlyingToken, tokenList[i].isIETH], {initializer: 'setInit'})
+    await erc20.deployTransaction.wait();
     console.log("ERC20ChildTunnel deployed to:", erc20.address);
     console.log(
       "npx hardhat verify --network goerli",
       erc20.address,
-      `"${tokenList[i].name}"`,
-      `"${tokenList[i].symbol}"`,
-      `${tokenList[i].underlyingToken}`,
-      " --contract contracts/tunnel/LiteVaultRoot.sol:LiteVaultRoot"
+      // `"${tokenList[i].name}"`,
+      // `"${tokenList[i].symbol}"`,
+      // `${tokenList[i].underlyingToken}`,
+      // " --contract contracts/tunnel/LiteVaultRoot.sol:LiteVaultRoot"
     );
   }
  
-
-  // const ERC20 = await ethers.getContractFactory("FxERC20ChildTunnel");
-  // const erc20 = await ERC20.deploy(fxChild, erc20Token);
-  // await erc20.deployTransaction.wait();
-  // console.log("ERC20ChildTunnel deployed to:", erc20.address);
-  // console.log(
-  //   "npx hardhat verify --network mumbai",
-  //   erc20.address,
-  //   fxChild,
-  //   erc20Token
-  // );
 }
 
 main()

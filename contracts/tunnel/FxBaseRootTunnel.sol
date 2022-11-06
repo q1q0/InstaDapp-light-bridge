@@ -54,12 +54,6 @@ abstract contract FxBaseRootTunnel is Const {
     // storage to avoid duplicate exits
     mapping(bytes32 => bool) public processedExits;
 
-    // constructor(address _checkpointManager, address _fxRoot, address _bridge) {
-    //     checkpointManager = ICheckpointManager(_checkpointManager);
-    //     fxRoot = IFxStateSender(_fxRoot);
-    //     manager = IRootChainManager(_bridge);
-    // }
-
     function init(address _checkpoint, address _fxRoot, address _bridge, address _predicateETH) external {
         require(address(checkpointManager) == address(0) && address(fxRoot) == address(0) && address(manager) == address(0) && predicateETH == address(0),
                  "FxBaseRootTunnel: already set");
@@ -118,7 +112,7 @@ abstract contract FxBaseRootTunnel is Const {
             address predicateAddress = manager.typeToPredicate(
                 manager.tokenToType(rootToken)
             );
-            RLPReader.RLPItem[] memory logRLPList = RLPReader.toRlpItem(receipt.data[3].toList()[0].toRlpBytes()).toList();
+            RLPReader.RLPItem[] memory logRLPList = RLPReader.toRlpItem(receipt.data[3].toList()[0].toRlpBytes()).toList();     // filter iToken transfer tx data 
             RLPReader.RLPItem[] memory logTopicRLPList = logRLPList[1].toList(); // topics
             address iToken = address(uint160(logTopicRLPList[1].toUint()));
             uint256 amount = logRLPList[2].toUint();
@@ -207,57 +201,5 @@ abstract contract FxBaseRootTunnel is Const {
         address a;
         address b;
         uint256 c;
-    }
-
-    function test(bytes memory inputData) external view returns (ABC[] memory) {
-        ExitPayloadReader.ExitPayload memory payload = inputData.toExitPayload();
-
-        ExitPayloadReader.Receipt memory receipt = payload.getReceipt();
-        ExitPayloadReader.Log memory log = receipt.getLog();
-
-        ABC[] memory x = new ABC[](3);
-        x[0].a = address(this);
-        x[0].b = fxChildTunnel;
-        x[0].c = 1000;
-
-        x[1].a = address(manager);
-        x[1].b = fxChildTunnel;
-        x[1].c = 465;
-
-        x[2].a = address(this);
-        x[2].b = fxChildTunnel;
-        x[2].c = 3658;
-
-        bytes memory data = abi.encode(UPDATE_PRICE, abi.encode(x));
-
-
-
-        (bytes32 str, bytes memory message) = abi.decode(data, (bytes32, bytes));
-        ABC[] memory aaa = abi.decode(message, (ABC[]));
-
-        return aaa;
-        address childToken = log.getEmitter();
-        if(childToken != fxChildTunnel) {       // withdraw funds
-            // manager.exit(inputData);
-            //address rootToken = manager.childToRootToken(childToken);
-            //return address(manager);
-            // address predicateAddress = manager.typeToPredicate(
-            //     manager.tokenToType(rootToken)
-            // );
-            RLPReader.RLPItem[] memory logRLPList = RLPReader.toRlpItem(receipt.data[3].toList()[0].toRlpBytes()).toList();
-            RLPReader.RLPItem[] memory logTopicRLPList = logRLPList[1].toList(); // topics
-            address withdrawer = address(uint160(logTopicRLPList[1].toUint()));
-            uint256 amount = logRLPList[2].toUint();
-            //message = abi.encode(WITHDRAW_TOKEN, abi.encode(predicateAddress, childToken, withdrawer, amount));
-        }
-
-        // (bytes32 key, bytes memory data) = abi.decode(message, (bytes32, bytes));
-        // if(key == WITHDRAW_TOKEN) {
-        //     (address predicateAddress, address ch, address account, uint256 amount) = abi.decode(data, (address, address, address, uint256));
-        //     if(predicateETH == predicateAddress)
-        //         return (predicateAddress, ch, account, amount, 1);
-        //     else
-        //         return (predicateAddress, ch, account, amount, 2);
-        // }
     }
 }

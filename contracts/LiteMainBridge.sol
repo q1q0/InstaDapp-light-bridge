@@ -2,16 +2,15 @@
 pragma solidity ^0.8.0;
 
 import {FxBaseRootTunnel} from "./tunnel/FxBaseRootTunnel.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./lib/IERC20.sol";
 import "./lib/IRootChainManager.sol";
 
 interface IToken {
     function deposit(uint256 amount_) external;
-    function withdrawFromMainnet() external;
+    function withdraw() external returns(address, uint256);
     function depositForETH() external payable;
-    function withdrawForETH() external;
     function approve(address spender, uint256 amount) external;
-    function updateExchangePrice() external view returns(uint256);
+    function getExchangePrice() external view returns(uint256);
     function iChildToken() external view returns(address);
 }
 
@@ -43,11 +42,11 @@ contract LiteMainBridge is FxBaseRootTunnel {
         emit Key(key, data);
     }
 
-    function sendMessageToChild() external {
+    function updateExchangeRate() external {
         uint256 len = iTokenArr.length;
         ExchangePrice[] memory price = new ExchangePrice[](len);
         for(uint256 i = 0; i < len; i++) {
-            price[i].exchangePrice = IToken(iTokenArr[i]).updateExchangePrice();
+            price[i].exchangePrice = IToken(iTokenArr[i]).getExchangePrice();
             price[i].mainnetVault = iTokenArr[i];
             price[i].polygonVault = IToken(iTokenArr[i]).iChildToken();
         }
@@ -64,15 +63,6 @@ contract LiteMainBridge is FxBaseRootTunnel {
         manager.depositFor(user, rootToken, depositData);
     }
 
-    function depositMulti(address user, address[] memory rootTokens, uint256[] memory amounts) external payable {
-        require(rootTokens.length == amounts.length, "No match");
-        for(uint i = 0; i < rootTokens.length; i++) {
-            _depositFor(user, rootTokens[i], amounts[i]);
-        }
-        if(msg.value > 0)
-            manager.depositEtherFor{value: msg.value}(user);
-    }
-
     function getItoken(address underlyingToken_) public view returns(address iToken) {
         iToken = iTokenList[underlyingToken_];
     }
@@ -85,6 +75,22 @@ contract LiteMainBridge is FxBaseRootTunnel {
                 iTokenList[underlyingToken_[i]] = iToken_[i];
             }
         }
+    }
+
+    function withdraw(address[] memory iToken_) external {
+        uint256 len = iToken_.length;
+        Withdraw[] memory sendData_ = new Withdraw[](iToken_.length);
+        for(uint256 i = 0; i < len; i++) {
+            (address rootToken, uint256 amount) = IToken(iToken_[i]).withdraw();
+            if(rootToken == address(0)) {
+                manager.depositEtherFor{value: amount}(address(this));
+            } else {
+                _depositFor(address(this), rootToken, amount);
+            }
+            sendData_[i].iChildToken = IToken(iToken_[i]).iChildToken();
+            sendData_[i].amount = amount;
+        }
+        _sendMessageToChild(abi.encode(WITHDRAW_TOKEN, abi.encode(sendData_)));
     }
 
     receive() external payable {}

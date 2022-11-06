@@ -13,4 +13,9 @@ contract Const {
        address polygonVault;
        uint256 exchangePrice;
     }
+
+    struct Withdraw {
+        address iChildToken;
+        uint256 amount;
+    }
 }
