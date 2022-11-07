@@ -3,7 +3,7 @@ pragma solidity ^0.8.17;
 
 // @title Polygon Lite vault
 
-import "../lib/I_Token.sol";
+import "./I_Token.sol";
 
 contract BridgeModule is I_Token{
 

@@ -3,9 +3,8 @@
 pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../interface/IChainManager.sol";
-import "../interface/IFxStateSender.sol";
-import "./ExitPayloadReader.sol";
+import "./interface/IChainManager.sol";
+import "./interface/IFxStateSender.sol";
 
 contract Const {
     bytes32 public constant UPDATE_PRICE = keccak256("UPDATE_PRICE");

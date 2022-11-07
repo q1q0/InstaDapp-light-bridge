@@ -8,7 +8,7 @@ import "../lib/ExitPayloadReader.sol";
 import "../interface/IChainManager.sol";
 import "../interface/IFxStateSender.sol";
 
-import {VariableForBridge} from "../lib/Variable.sol";
+import {VariableForBridge} from "../Variable.sol";
 
 contract ICheckpointManager {
     struct HeaderBlock {

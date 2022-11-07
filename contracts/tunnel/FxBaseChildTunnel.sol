@@ -3,7 +3,7 @@ pragma solidity ^0.8.17;
 
 import "../interface/IFxMessageProcessor.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {VariableForBridge} from "../lib/Variable.sol";
+import {VariableForBridge} from "../Variable.sol";
 
 /**
  * @notice Mock child tunnel contract to receive and send message from L2
