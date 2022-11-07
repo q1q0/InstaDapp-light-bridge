@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.17;
 
 // @title Polygon Lite vault
 
-import "../lib/IToken.sol";
+import "../lib/I_Token.sol";
 
-contract BridgeModule is Variables{
-    address public iChildToken;
+contract BridgeModule is I_Token{
 
     function getExchangePrice() public view returns(uint256) {
         require(msg.sender == liteBridgeContract, "not-bridge-contract");
@@ -43,11 +42,9 @@ contract BridgeModule is Variables{
         _mint(msg.sender, msg.value);
     }
 
-    function setIChildToken(address childToken_) external {
-        require(owner == msg.sender, "no permission");
+    function setIChildToken(address childToken_) external onlyOwner {
         iChildToken = childToken_;
     }
-
 }
 
 contract LiteVaultRoot is BridgeModule {

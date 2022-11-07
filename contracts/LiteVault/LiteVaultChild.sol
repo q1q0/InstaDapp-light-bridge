@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.17;
 
 // @title Polygon Lite vault
 
-import "../lib/IToken.sol";
+import "../lib/I_Token.sol";
 
-abstract contract BridgeModule is Variables{
+abstract contract BridgeModule is I_Token{
 
     function updateExchangePrice(uint256 exchangePrice_) public {
         require(msg.sender == liteBridgeContract, "not-bridge-contract");

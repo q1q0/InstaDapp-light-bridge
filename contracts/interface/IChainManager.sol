@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts (last updated v4.6.0) (token/ERC20/IERC20.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.17;
 
 interface IRootChainManager {
     function checkpointManagerAddress() external view returns (address);
@@ -16,3 +15,10 @@ interface IRootChainManager {
         bytes calldata depositData
     ) external;
 }
+
+interface IChildChainManager {
+    function withdraw(uint256 amount) external;
+    function transferFrom(address sender, address recipient, uint256 amount) external;
+    function balanceOf(address account) external view returns(uint256);
+}
+

@@ -1,40 +1,35 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.17;
 
 import {FxBaseChildTunnel} from "./tunnel/FxBaseChildTunnel.sol";
-import "./lib/Const.sol";
-import "./lib/IERC20.sol";
-
-interface IChildChainManager {
-    function withdraw(uint256 amount) external;
-    function transferFrom(address sender, address recipient, uint256 amount) external;
-    function balanceOf(address account) external view returns(uint256);
-}
-
-interface IIToken {
-    function depositToMainnet() external returns(uint256);
-    function withdrawFromMainnet(uint256 amount) external;
-    function updateExchangePrice(uint256 exchangePrice_) external;
-    function UNDERLYING_TOKEN() external returns(address);
-}
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Ii_ChildToken} from "./interface/Ii_Token.sol";
+import {IChildChainManager} from "./interface/IChainManager.sol";
 
 /**
  * @title LitePolygonBridge
  */
-contract LitePolygonBridge is FxBaseChildTunnel, Const {
-    // uint256 public latestStateId;
-    // address public latestRootMessageSender;
-    // bytes public latestData;
+contract LitePolygonBridge is FxBaseChildTunnel {
 
-    // IChildChainManager manager;
     mapping(address => bool) rebalancer;
-    // mapping(address => address) iTokenList;
 
     event Key(bytes32 key);
 
-    // constructor(address _fxChild, address _bridge) FxBaseChildTunnel(_fxChild) {
-    //     manager = IChildChainManager(_bridge);
-    // }
+    function sendMessageToRoot(bytes memory message) external {
+        _sendMessageToRoot(message);
+    }
+
+    function deposit(address iToken) external {
+        require(rebalancer[msg.sender] || owner() == msg.sender, "no permission");
+        uint256 _amount = Ii_ChildToken(iToken).depositToMainnet();
+        IChildChainManager(Ii_ChildToken(iToken).UNDERLYING_TOKEN()).withdraw(_amount);
+    }
+
+    function setRebalancer(address _account, bool flag) external onlyOwner {
+        rebalancer[_account] = flag;
+    }
+
+    receive() external payable {}
 
     function _processMessageFromRoot(
         uint256,
@@ -46,40 +41,18 @@ contract LitePolygonBridge is FxBaseChildTunnel, Const {
             ExchangePrice[] memory list = abi.decode(_dataFromRoot, (ExchangePrice[]));
             uint256 len = list.length;
             for (uint256 i = 0; i < len; i++) {
-                IIToken(list[i].polygonVault).updateExchangePrice(list[i].exchangePrice);
+                Ii_ChildToken(list[i].polygonVault).updateExchangePrice(list[i].exchangePrice);
             }
         } else if(key == WITHDRAW_TOKEN) {
             Withdraw[] memory list = abi.decode(_dataFromRoot, (Withdraw[]));
             uint256 len = list.length;
             for (uint256 i = 0; i < len; i++) {
-                address underlyingToken = IIToken(list[i].iChildToken).UNDERLYING_TOKEN();
+                address underlyingToken = Ii_ChildToken(list[i].iChildToken).UNDERLYING_TOKEN();
                 IERC20(underlyingToken).approve(list[i].iChildToken, list[i].amount);
-                IIToken(list[i].iChildToken).withdrawFromMainnet(list[i].amount);
+                Ii_ChildToken(list[i].iChildToken).withdrawFromMainnet(list[i].amount);
             }
         }
 
         emit Key(key);
     }
-
-    function sendMessageToRoot(bytes memory message) public {
-        _sendMessageToRoot(message);
-    }
-
-    function deposit(address iToken) external {
-        require(rebalancer[msg.sender] || owner == msg.sender, "no permission");
-        // iTokenList[IIToken(iToken).UNDERLYING_TOKEN()] = iToken;
-        uint256 _amount = IIToken(iToken).depositToMainnet();
-        IChildChainManager(IIToken(iToken).UNDERLYING_TOKEN()).withdraw(_amount);
-    }
-
-    // function getItoken(address underlyingToken_) public view returns(address iToken) {
-    //     iToken = iTokenList[underlyingToken_];
-    // }
-
-    function setRebalancer(address _account, bool flag) external {
-        require(msg.sender == owner, "no permission");
-        rebalancer[_account] = flag;
-    }
-
-    receive() external payable {}
 }

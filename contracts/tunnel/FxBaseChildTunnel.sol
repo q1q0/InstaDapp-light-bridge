@@ -1,42 +1,21 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.17;
 
-// IFxMessageProcessor represents interface to process message
-interface IFxMessageProcessor {
-    function processMessageFromRoot(
-        uint256 stateId,
-        address rootMessageSender,
-        bytes calldata data
-    ) external;
-}
+import "../interface/IFxMessageProcessor.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {VariableForBridge} from "../lib/Variable.sol";
 
 /**
  * @notice Mock child tunnel contract to receive and send message from L2
  */
-abstract contract FxBaseChildTunnel is IFxMessageProcessor {
+abstract contract FxBaseChildTunnel is IFxMessageProcessor, OwnableUpgradeable, VariableForBridge {
     // MessageTunnel on L1 will get data from this event
     event MessageSent(bytes message);
-
-    // fx child
-    address public fxChild;
-
-    // fx root tunnel
-    address public fxRootTunnel;
-    address public owner;
-
-    // constructor(address _fxChild) {
-    //     fxChild = _fxChild;
-    // }
 
     function init(address _fxChild) external {
         require(fxChild == address(0), "FxBaseChildTunnel: ALREADY SET");
         fxChild = _fxChild;
-        owner = msg.sender;
-    }
-
-    function setOwner(address _newOwner) external {
-        require(msg.sender == owner, "not owner");
-        owner = _newOwner;
+        __Ownable_init();
     }
 
     // Sender must be fxRootTunnel in case of ERC20 tunnel

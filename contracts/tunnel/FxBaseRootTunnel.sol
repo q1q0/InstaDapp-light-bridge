@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.17;
 
 import {RLPReader} from "../lib/RLPReader.sol";
 import {MerklePatriciaProof} from "../lib/MerklePatriciaProof.sol";
 import {Merkle} from "../lib/Merkle.sol";
 import "../lib/ExitPayloadReader.sol";
-import "../lib/Const.sol";
-import "../lib/IRootChainManager.sol";
+import "../interface/IChainManager.sol";
+import "../interface/IFxStateSender.sol";
 
-interface IFxStateSender {
-    function sendMessageToChild(address _receiver, bytes calldata _data) external;
-}
+import {VariableForBridge} from "../lib/Variable.sol";
 
 contract ICheckpointManager {
     struct HeaderBlock {
@@ -28,7 +26,7 @@ contract ICheckpointManager {
     mapping(uint256 => HeaderBlock) public headerBlocks;
 }
 
-abstract contract FxBaseRootTunnel is Const {
+abstract contract FxBaseRootTunnel is VariableForBridge {
     using RLPReader for RLPReader.RLPItem;
     using Merkle for bytes32;
     using ExitPayloadReader for bytes;
@@ -37,20 +35,9 @@ abstract contract FxBaseRootTunnel is Const {
     using ExitPayloadReader for ExitPayloadReader.LogTopics;
     using ExitPayloadReader for ExitPayloadReader.Receipt;
 
-    IRootChainManager manager;
     event Error(string error);
 
-    // keccak256(MessageSent(bytes))
-    bytes32 public constant SEND_MESSAGE_EVENT_SIG = 0x8c5261668696ce22758910d05bab8f186d6eb247ceac2af2e82c7dc17669b036;
-
-    // state sender contract
-    IFxStateSender public fxRoot;
-    // root chain manager
     ICheckpointManager public checkpointManager;
-    // child tunnel contract which receives and sends messages
-    address public fxChildTunnel;
-    address public predicateETH;
-
     // storage to avoid duplicate exits
     mapping(bytes32 => bool) public processedExits;
 
@@ -59,7 +46,7 @@ abstract contract FxBaseRootTunnel is Const {
                  "FxBaseRootTunnel: already set");
         checkpointManager = ICheckpointManager(_checkpoint);
         fxRoot = IFxStateSender(_fxRoot);
-         manager = IRootChainManager(_bridge);
+        manager = IRootChainManager(_bridge);
         predicateETH = _predicateETH;
     }
 
