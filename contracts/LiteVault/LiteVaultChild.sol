@@ -15,14 +15,14 @@ abstract contract BridgeModule is I_Token{
         // Event is emitted
     }
 
-    function depositToMainnet() public returns(uint256 amount) {
+    function toMainnet() public returns(uint256 amount) {
         require(msg.sender == liteBridgeContract, "not-bridge-contract");
         amount = UNDERLYING_TOKEN.balanceOf(address(this)) * 9 / 10;
         UNDERLYING_TOKEN.transfer(liteBridgeContract, amount); // Sends only 90% of the funds
         // Event is emitted
     }
 
-    function withdrawFromMainnet(uint256 amount) public {
+    function fromMainnet(uint256 amount) public {
         require(msg.sender == liteBridgeContract, "not-bridge-contract");
        
         UNDERLYING_TOKEN.transferFrom(liteBridgeContract, address(this), amount);

@@ -11,8 +11,8 @@ interface Ii_RootToken {
 }
 
 interface Ii_ChildToken {
-    function depositToMainnet() external returns(uint256);
-    function withdrawFromMainnet(uint256 amount) external;
+    function toMainnet() external returns(uint256);
+    function fromMainnet(uint256 amount) external;
     function updateExchangePrice(uint256 exchangePrice_) external;
     function UNDERLYING_TOKEN() external returns(address);
 }

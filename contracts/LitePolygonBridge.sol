@@ -21,7 +21,7 @@ contract LitePolygonBridge is FxBaseChildTunnel {
 
     function deposit(address iToken) external {
         require(rebalancer[msg.sender] || owner() == msg.sender, "no permission");
-        uint256 _amount = Ii_ChildToken(iToken).depositToMainnet();
+        uint256 _amount = Ii_ChildToken(iToken).toMainnet();
         IChildChainManager(Ii_ChildToken(iToken).UNDERLYING_TOKEN()).withdraw(_amount);
     }
 
@@ -49,7 +49,7 @@ contract LitePolygonBridge is FxBaseChildTunnel {
             for (uint256 i = 0; i < len; i++) {
                 address underlyingToken = Ii_ChildToken(list[i].iChildToken).UNDERLYING_TOKEN();
                 IERC20(underlyingToken).approve(list[i].iChildToken, list[i].amount);
-                Ii_ChildToken(list[i].iChildToken).withdrawFromMainnet(list[i].amount);
+                Ii_ChildToken(list[i].iChildToken).fromMainnet(list[i].amount);
             }
         }
 
