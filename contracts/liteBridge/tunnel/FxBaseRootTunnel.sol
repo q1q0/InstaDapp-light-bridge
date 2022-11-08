@@ -11,7 +11,7 @@ import "../interface/IFxStateSender.sol";
 
 import {VariableForBridge} from "../Variable.sol";
 
-contract ICheckpointManager {
+interface ICheckpointManager {
     struct HeaderBlock {
         bytes32 root;
         uint256 start;
@@ -24,7 +24,7 @@ contract ICheckpointManager {
      * @notice mapping of checkpoint header numbers to block details
      * @dev These checkpoints are submited by plasma contracts
      */
-    mapping(uint256 => HeaderBlock) public headerBlocks;
+    function headerBlocks(uint256) external view returns(HeaderBlock);
 }
 
 abstract contract FxBaseRootTunnel is VariableForBridge, Initializable {
