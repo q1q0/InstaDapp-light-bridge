@@ -14,14 +14,6 @@ contract Const {
     bytes32 public constant SEND_MESSAGE_EVENT_SIG = 0x8c5261668696ce22758910d05bab8f186d6eb247ceac2af2e82c7dc17669b036;
 }
 
-contract VariableForVault {
-    uint256 internal exchangePrice;
-    IERC20 public UNDERLYING_TOKEN;
-    address public liteBridgeContract;
-    bool internal isIETHContract;
-    address public iChildToken;
-}
-
 contract VariableForBridge is Const {
     // fx child
     address public fxChild;
