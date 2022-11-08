@@ -12,7 +12,7 @@ import {VariableForVault} from "../Variable.sol";
 
 contract I_Token is ERC20Upgradeable, OwnableUpgradeable, VariableForVault {
 
-    function initialize(string memory name_, string memory symbol_, address underlyingToken_, bool isIETH) external {
+    function initialize(string memory name_, string memory symbol_, address underlyingToken_, bool isIETH) external initializer {
         __ERC20_init(name_,symbol_);
         UNDERLYING_TOKEN = IERC20(underlyingToken_);
         isIETHContract = isIETH;

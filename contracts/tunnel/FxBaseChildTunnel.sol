@@ -12,7 +12,7 @@ abstract contract FxBaseChildTunnel is IFxMessageProcessor, OwnableUpgradeable, 
     // MessageTunnel on L1 will get data from this event
     event MessageSent(bytes message);
 
-    function init(address _fxChild) external {
+    function init(address _fxChild) external initializer {
         require(fxChild == address(0), "FxBaseChildTunnel: ALREADY SET");
         fxChild = _fxChild;
         __Ownable_init();

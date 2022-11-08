@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {RLPReader} from "../lib/RLPReader.sol";
 import {MerklePatriciaProof} from "../lib/MerklePatriciaProof.sol";
 import {Merkle} from "../lib/Merkle.sol";
@@ -26,7 +27,7 @@ contract ICheckpointManager {
     mapping(uint256 => HeaderBlock) public headerBlocks;
 }
 
-abstract contract FxBaseRootTunnel is VariableForBridge {
+abstract contract FxBaseRootTunnel is VariableForBridge, Initializable {
     using RLPReader for RLPReader.RLPItem;
     using Merkle for bytes32;
     using ExitPayloadReader for bytes;
@@ -41,9 +42,7 @@ abstract contract FxBaseRootTunnel is VariableForBridge {
     // storage to avoid duplicate exits
     mapping(bytes32 => bool) public processedExits;
 
-    function init(address _checkpoint, address _fxRoot, address _bridge, address _predicateETH) external {
-        require(address(checkpointManager) == address(0) && address(fxRoot) == address(0) && address(manager) == address(0) && predicateETH == address(0),
-                 "FxBaseRootTunnel: already set");
+    function init(address _checkpoint, address _fxRoot, address _bridge, address _predicateETH) external initializer {
         checkpointManager = ICheckpointManager(_checkpoint);
         fxRoot = IFxStateSender(_fxRoot);
         manager = IRootChainManager(_bridge);
@@ -183,10 +182,4 @@ abstract contract FxBaseRootTunnel is VariableForBridge {
      * @param message bytes message that was sent from Child Tunnel
      */
     function _processMessageFromChild(bytes memory message) internal virtual;
-
-    struct ABC {
-        address a;
-        address b;
-        uint256 c;
-    }
 }
