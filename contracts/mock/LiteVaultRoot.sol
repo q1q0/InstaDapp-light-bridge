@@ -5,7 +5,7 @@ pragma solidity ^0.8.17;
 
 import "./I_Token.sol";
 
-contract BridgeModule is I_Token{
+contract BridgeModule is I_Token {
 
     function getExchangePrice() public view returns(uint256) {
         require(msg.sender == liteBridgeContract, "not-bridge-contract");
