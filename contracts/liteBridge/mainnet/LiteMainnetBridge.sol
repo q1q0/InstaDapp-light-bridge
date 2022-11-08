@@ -7,8 +7,22 @@ import "@openzeppelin/contracts/token//ERC20/utils/SafeERC20.sol";
 import "./Variables.sol";
 import "./interface/IiToken.sol";
 
+/*
+ - Fix all the compiler errors
+ - Add Ownable logics
+ - Add admin functions
+ - Add onlyRebalancer modifier
+ - Add events
+ - Fill IiToken interface file
+*/
 
-contract LiteMainnetBridge is VariablesV1 {
+
+contract AdminModule is VariablesV1 {
+    // Add function to add RootToChain Mapping
+    // Add function to add rebalancer Mapping
+}
+
+contract LiteMainnetBridge is AdminModule {
     using IERC20 for SafeERC20;
 
     function _sendMessageToChild(bytes memory message) internal {
