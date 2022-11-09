@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract IToken is ERC20Upgradeable, OwnableUpgradeable {
+contract BaseIToken is ERC20Upgradeable, OwnableUpgradeable {
     uint256 internal exchangePrice;
     IERC20 public UNDERLYING_TOKEN;
     address public liteBridgeContract;

@@ -3,9 +3,9 @@ pragma solidity ^0.8.17;
 
 // @title Polygon Lite vault
 
-import "./I_Token.sol";
+import "./Common.sol";
 
-abstract contract BridgeModule is I_Token {
+abstract contract BridgeModule is BaseIToken {
 
     function updateExchangePrice(uint256 exchangePrice_) public {
         require(msg.sender == liteBridgeContract, "not-bridge-contract");

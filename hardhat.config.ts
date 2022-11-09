@@ -90,18 +90,18 @@ const config: HardhatUserConfig = {
     mainnet: {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`,
       chainId: 1,
-      accounts: [process.env.PRIVATE_KEY as string],
+      // accounts: [process.env.PRIVATE_KEY as string],
     },
     goerli: {
         // url: `https://goerli.infura.io/v3/${process.env.INFURA_KEY}`,
         url: `https://eth-goerli.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
         chainId: 5,
-        accounts: [process.env.PRIVATE_KEY as string],
+        // accounts: [process.env.PRIVATE_KEY as string],
     },
     mumbai: {
       url: `https://polygon-testnet.public.blastapi.io`,
       chainId: 80001,
-      accounts: [process.env.PRIVATE_KEY as string],
+      // accounts: [process.env.PRIVATE_KEY as string],
     },
     ganache: {
       chainId: 1337,

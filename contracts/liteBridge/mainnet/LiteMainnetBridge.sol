@@ -2,7 +2,7 @@
 pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token//ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./Variables.sol";
 import "./interface/IiToken.sol";
@@ -20,10 +20,24 @@ import "./interface/IiToken.sol";
 contract AdminModule is VariablesV1 {
     // Add function to add RootToChain Mapping
     // Add function to add rebalancer Mapping
+
+     function setRebalancer(address _account, bool flag) external /* onlyOwner */ {
+        rebalancer[_account] = flag;
+    }
+
+    constructor(
+        address _rootChainManager,
+        address _fxRoot,
+        address _liteBridgeChild
+    ) VariablesV1 (
+        _rootChainManager,
+        _fxRoot,
+        _liteBridgeChild
+    ) {}
 }
 
 contract LiteMainnetBridge is AdminModule {
-    using IERC20 for SafeERC20;
+    using SafeERC20 for IERC20 ;
 
     function _sendMessageToChild(bytes memory message) internal {
         fxRoot.sendMessageToChild(address(this), message);
@@ -34,18 +48,18 @@ contract LiteMainnetBridge is AdminModule {
         address vault,
         address token,
         uint256 amount
-    ) external onlyRebalancer {
+    ) external /* onlyRebalancer */ {
         rootChainManager.exit(inputData);
 
-        if (token == ethAddress) {
+        if (token == nativeToken) {
             // deposit into weth
             // give allowance
         } else {
             // give allowance
         }
 
-        uint256 iTokenAmount_ = IiTokenVault(vault).supply(token, amount);
 
+        uint256 iTokenAmount_ = IiTokenVault(vault).supply(token, amount, address(this));
         // optional - send exchangeRate to polygon of the vault
 
         // emit event
@@ -55,15 +69,15 @@ contract LiteMainnetBridge is AdminModule {
         address vault,
         address token,
         uint256 amount
-    ) external onlyRebalancer {
-        if (token == ethAddress) {
+    ) external /* onlyRebalancer */ {
+        if (token == nativeToken) {
             // deposit into weth
             // give allowance
         } else {
             // give allowance
         }
 
-        uint256 iTokenAmount_ = IiTokenVault(vault).supply(token, amount);
+        uint256 iTokenAmount_ = IiTokenVault(vault).supply(token, amount, address(this));
 
         // optional - send exchangeRate to polygon of the vault
 
@@ -72,18 +86,19 @@ contract LiteMainnetBridge is AdminModule {
 
     function updateExchangeRate(
         address[] memory rootVaults
-    ) external onlyRebalancer {
+    ) external /* onlyRebalancer */ {
         uint256 length_ = rootVaults.length;
         ExchangePriceData[] memory exchangePrices_ = new ExchangePriceData[](length_);
         for(uint256 i = 0; i < length_; i++) {
             address rootVault_ = rootVaults[i];
-            (exchangePrices_.exchangePrice, ) = IiTokenVault(rootVault_).getCurrentExchangePrice();
-            exchangePrices_.rootVault = rootVault_;
-            exchangePrices_.childVault = rootToChainVault[rootVault_];
+            (exchangePrices_[i].exchangePrice, ) = IiTokenVault(rootVault_).getCurrentExchangePrice();
+            exchangePrices_[i].rootVault = rootVault_;
+            exchangePrices_[i].childVault = rootToChainVault[rootVault_];
         }
         _sendMessageToChild(
             abi.encode(
                 UPDATE_EXCHANGE_PRICE,
+                1,
                 abi.encode(exchangePrices_)
             )
         );
@@ -99,17 +114,17 @@ contract LiteMainnetBridge is AdminModule {
         uint256 length_ = rootVaults.length;
         for(uint256 i = 0; i < length_; i++) {
             address rootVault_ = rootVaults[i];
-            address amount_ = amounts[i];
+            uint256 amount_ = amounts[i];
             address token_ = tokens[i];
-            (address rootToken, uint256 amount) = IiTokenVault(rootVault_).withdraw();
-            if(token_ == ethAddress) {
+            IiTokenVault(rootVault_).withdraw(amount_, address(this));
+            if(token_ == nativeToken) {
                 // Check balance of wETH and stETH
                 // Convert wETH and stETH into ETH
                 uint256 ethAmount = 0; // balance of wETH and stETH
                 rootChainManager.depositEtherFor{value: amount_}(address(this));
             } else {
                 // Approve
-                manager.depositFor(address(this), token_, abi.encode(amount_));
+                rootChainManager.depositFor(address(this), token_, abi.encode(amount_));
             }
         }
         
@@ -119,4 +134,14 @@ contract LiteMainnetBridge is AdminModule {
     }
 
     receive() external payable {}
+
+    constructor(
+        address _rootChainManager,
+        address _fxRoot,
+        address _liteBridgeChild
+    ) AdminModule (
+        _rootChainManager,
+        _fxRoot,
+        _liteBridgeChild
+    ) {}
 }
