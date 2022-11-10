@@ -66,6 +66,14 @@ const config: HardhatUserEtherscanConfig = {
       url:
         "https://rpc.ankr.com/avalanche",
     },
+    goerli: {
+      ...sharedNetworkConfig,
+      url: "https://rpc.ankr.com/eth_goerli",
+    },
+    mumbai: {
+      ...sharedNetworkConfig,
+      url: "https://rpc.ankr.com/polygon_mumbai",
+    },
     coverage: {
       url: "http://127.0.0.1:8555", // Coverage launches its own ganache-cli client
     },
