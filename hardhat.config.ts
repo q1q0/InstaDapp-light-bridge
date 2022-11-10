@@ -1,19 +1,12 @@
 import { config as dotEnvConfig } from "dotenv";
 dotEnvConfig();
 
-import { HardhatUserConfig, HttpNetworkUserConfig } from "hardhat/types";
+import { HardhatUserConfig } from "hardhat/config";
+import { HttpNetworkUserConfig } from "hardhat/types";
 
-import "@nomiclabs/hardhat-waffle";
-import "@typechain/hardhat";
-import "@nomiclabs/hardhat-etherscan";
-import "solidity-coverage";
+import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-deploy";
 
-interface Etherscan {
-  etherscan: { apiKey: string | undefined };
-}
-
-type HardhatUserEtherscanConfig = HardhatUserConfig & Etherscan;
 
 const {
   ALCHEMY_TOKEN_MAINNET,
@@ -39,7 +32,7 @@ if (DEPLOYER_PRIVATE_KEY) {
   };
 }
 
-const config: HardhatUserEtherscanConfig = {
+const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   solidity: {
     compilers: [{ version: "0.8.17", settings: {} }],
@@ -47,11 +40,12 @@ const config: HardhatUserEtherscanConfig = {
   networks: {
     hardhat: {
       forking: {
-        url: "https://eth-mainnet.g.alchemy.com/v2/" + ALCHEMY_TOKEN_MAINNET,
-        blockNumber: 15752216,
+        // url: "https://eth-mainnet.g.alchemy.com/v2/" + ALCHEMY_TOKEN_MAINNET,
+        url: "https://rpc.ankr.com/eth_goerli",
+        // blockNumber: 15752216,
       },
-      gasPrice: 20000000000,
-      gas: 6000000,
+      // gasPrice: 20000000000,
+      // gas: 6000000,
     },
     localhost: {},
     mainnet: {
