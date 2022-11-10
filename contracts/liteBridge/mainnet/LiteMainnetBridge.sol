@@ -27,12 +27,10 @@ contract AdminModule is VariablesV1 {
 
     constructor(
         address _rootChainManager,
-        address _fxRoot,
-        address _liteBridgeChild
+        address _fxRoot
     ) VariablesV1 (
         _rootChainManager,
-        _fxRoot,
-        _liteBridgeChild
+        _fxRoot
     ) {}
 }
 
@@ -137,11 +135,9 @@ contract LiteMainnetBridge is AdminModule {
 
     constructor(
         address _rootChainManager,
-        address _fxRoot,
-        address _liteBridgeChild
+        address _fxRoot
     ) AdminModule (
         _rootChainManager,
-        _fxRoot,
-        _liteBridgeChild
+        _fxRoot
     ) {}
 }
