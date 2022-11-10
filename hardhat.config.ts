@@ -20,7 +20,8 @@ const {
   ALCHEMY_TOKEN_POLYGON,
   ALCHEMY_TOKEN_ARBITRUM,
   ALCHEMY_TOKEN_OPTIMISM,
-  ETHERSCAN_API_KEY,
+  ETHERSCAN_API_KEY_MAINNET,
+  ETHERSCAN_API_KEY_POLYGON,
   DEPLOYER_PRIVATE_KEY,
   DEPLOYER_MNEMONIC,
 } = process.env;
@@ -79,9 +80,12 @@ const config: HardhatUserEtherscanConfig = {
     },
   },
   etherscan: {
-    // Your API key for Etherscan
-    // Obtain one at https://etherscan.io/
-    apiKey: ETHERSCAN_API_KEY,
+    apiKey: {
+      // @ts-ignore
+      goerli: ETHERSCAN_API_KEY_MAINNET,
+      // @ts-ignore
+      polygonMumbai: ETHERSCAN_API_KEY_POLYGON
+    },
   },
   namedAccounts: {
     deployer: {
