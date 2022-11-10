@@ -72,7 +72,7 @@ contract UserModule is BaseIToken {
     }
 }
 
-contract LiteVaultRoot is UserModule {
+contract MockLiteVaultRoot is UserModule {
     constructor(address underlyingToken_, address liteBridgeContract_, bool isEthVault_) UserModule(underlyingToken_, liteBridgeContract_, isEthVault_){}
 
 } 

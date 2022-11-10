@@ -13,15 +13,15 @@ contract VariablesV1 is Common {
     // state sender contract child
     IFxMessageProcessor public immutable fxChild;
 
-    // Lite Bridge Contract Child
-    address public immutable liteBridgeRoot;
+    // // Lite Bridge Contract Child
+    // address public immutable liteBridgeRoot;
 
     mapping (address => address) public childToRootVault;
 
     mapping (address => bool) public rebalancer;
 
-    constructor(address _fxChild, address _liteBridgeRoot) {
+    constructor(address _fxChild) {
         fxChild = IFxMessageProcessor(_fxChild);
-        liteBridgeRoot = _liteBridgeRoot;
+        // liteBridgeRoot = _liteBridgeRoot;
     }
 }

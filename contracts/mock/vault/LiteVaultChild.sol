@@ -58,7 +58,7 @@ contract UserModule is BridgeModule {
 
 }
 
-contract LiteVaultChild is UserModule {
+contract MockLiteVaultChild is UserModule {
     constructor(address underlyingToken_, address liteBridgeContract_, bool isEthVault_) UserModule(underlyingToken_, liteBridgeContract_, isEthVault_){}
  
 
