@@ -1,136 +1,85 @@
-/* eslint-disable prettier/prettier */
-import * as dotenv from 'dotenv'
-dotenv.config()
+import { config as dotEnvConfig } from "dotenv";
+dotEnvConfig();
 
-import { HardhatUserConfig } from 'hardhat/types'
-import { task } from 'hardhat/config'
+import { HardhatUserConfig, HttpNetworkUserConfig } from "hardhat/types";
 
-// Plugins
+import "@nomiclabs/hardhat-waffle";
+import "@typechain/hardhat";
+import "@nomiclabs/hardhat-etherscan";
+import "solidity-coverage";
+import "hardhat-deploy";
 
-import '@nomiclabs/hardhat-ethers'
-import '@nomiclabs/hardhat-etherscan'
-import '@nomiclabs/hardhat-waffle'
-// import 'hardhat-abi-exporter'
-// import 'hardhat-gas-reporter'
-import 'hardhat-contract-sizer'
-import '@tenderly/hardhat-tenderly'
-import '@openzeppelin/hardhat-upgrades'
-import '@typechain/hardhat'
-import "hardhat-contract-sizer";
-import { createAlchemyWeb3 } from "@alch/alchemy-web3";
+interface Etherscan {
+  etherscan: { apiKey: string | undefined };
+}
 
-// Tasks
+type HardhatUserEtherscanConfig = HardhatUserConfig & Etherscan;
 
-// task('accounts', 'Prints the list of accounts', async (taskArgs, bre) => {
-//   const accounts = await bre.ethers.getSigners()
-//   for (const account of accounts) {
-//     console.log(await account.getAddress())
-//   }
-// })
+const {
+  ALCHEMY_TOKEN_MAINNET,
+  ALCHEMY_TOKEN_POLYGON,
+  ALCHEMY_TOKEN_ARBITRUM,
+  ALCHEMY_TOKEN_OPTIMISM,
+  ETHERSCAN_API_KEY,
+  DEPLOYER_PRIVATE_KEY,
+  DEPLOYER_MNEMONIC,
+} = process.env;
 
-task("account", "returns nonce and balance for specified address on multiple networks")
-  .addParam("address")
-  .setAction(async address => {
-    const web3Goerli = createAlchemyWeb3(`https://goerli.infura.io/v3/${process.env.INFURA_KEY}`);
-    const web3Mumbai = createAlchemyWeb3(`https://polygon-testnet.public.blastapi.io`);
+const DEFAULT_MNEMONIC =
+  "myth like bonus scare over problem client lizard pioneer submit female collect";
 
-    const networkIDArr = ["Ethereum Goerli:", "Polygon  Mumbai:"]
-    const providerArr = [web3Goerli, web3Mumbai];
-    const resultArr = [];
-    
-    for (let i = 0; i < providerArr.length; i++) {
-      const nonce = await providerArr[i].eth.getTransactionCount(address.address, "latest");
-      const balance = await providerArr[i].eth.getBalance(address.address)
-      resultArr.push([networkIDArr[i], nonce, parseFloat(providerArr[i].utils.fromWei(balance, "ether")).toFixed(2) + "ETH"]);
-    }
-    resultArr.unshift(["  |NETWORK|   |NONCE|   |BALANCE|  "])
-    console.log(resultArr);
-  });
+const sharedNetworkConfig: HttpNetworkUserConfig = {};
 
-// Config
+if (DEPLOYER_PRIVATE_KEY) {
+  sharedNetworkConfig.accounts = [DEPLOYER_PRIVATE_KEY];
+} else {
+  sharedNetworkConfig.accounts = {
+    mnemonic: DEPLOYER_MNEMONIC || DEFAULT_MNEMONIC,
+  };
+}
 
-const config: HardhatUserConfig = {
-  paths: {
-    sources: './contracts',
-    tests: './test',
-    artifacts: './build/contracts',
-  },
-  mocha: {
-    timeout: 100000000
-  },
+const config: HardhatUserEtherscanConfig = {
+  defaultNetwork: "hardhat",
   solidity: {
-    compilers: [
-      {
-        version: '0.8.17',
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 1,
-          },
-          outputSelection: {
-            '*': {
-              '*': ['storageLayout'],
-            },
-          },
-        },
-      },
-    ],
+    compilers: [{ version: "0.8.17", settings: {} }],
   },
-  defaultNetwork: 'hardhat',
-  
   networks: {
     hardhat: {
-      chainId: 31337,
-      // loggingEnabled: true,
       forking: {
-        url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
-        enabled: true,
-      }
+        url: "https://eth-mainnet.g.alchemy.com/v2/" + ALCHEMY_TOKEN_MAINNET,
+        blockNumber: 15752216,
+      },
+      gasPrice: 20000000000,
+      gas: 6000000,
     },
+    localhost: {},
     mainnet: {
-      url: `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`,
-      chainId: 1,
-      // accounts: [process.env.PRIVATE_KEY as string],
+      ...sharedNetworkConfig,
+      url: "https://eth-mainnet.g.alchemy.com/v2/" + ALCHEMY_TOKEN_MAINNET,
     },
-    goerli: {
-        // url: `https://goerli.infura.io/v3/${process.env.INFURA_KEY}`,
-        url: `https://eth-goerli.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
-        chainId: 5,
-        // accounts: [process.env.PRIVATE_KEY as string],
+    polygon: {
+      ...sharedNetworkConfig,
+      url: "https://polygon-mainnet.g.alchemy.com/v2/" + ALCHEMY_TOKEN_POLYGON,
     },
-    mumbai: {
-      url: `https://polygon-testnet.public.blastapi.io`,
-      chainId: 80001,
-      // accounts: [process.env.PRIVATE_KEY as string],
+    avalanche: {
+      ...sharedNetworkConfig,
+      url:
+        "https://rpc.ankr.com/avalanche",
     },
-    ganache: {
-      chainId: 1337,
-      url: 'http://localhost:8545',
+    coverage: {
+      url: "http://127.0.0.1:8555", // Coverage launches its own ganache-cli client
     },
   },
   etherscan: {
-    // apiKey: {
-    //   polygonMumbai: process.env.POLYGON_API_KEY,
-    // }
-     apiKey: process.env.ETHERSCAN_API_KEY // for ether net work
-    //  apiKey: process.env.POLYGON_API_KEY // for ether net work
-    //  apiKey: "N2E5BV7EU18ZEFEMGM8YS5NBPPQH9QJK3Q"
-    // apiKey: "BCT83TFQ1QJ7XPRIVG2V82YVF6SVTRVNDE"
+    // Your API key for Etherscan
+    // Obtain one at https://etherscan.io/
+    apiKey: ETHERSCAN_API_KEY,
   },
-  typechain: {
-    outDir: 'build/types',
-    target: 'ethers-v5',
+  namedAccounts: {
+    deployer: {
+      default: 0, // use the first account (index = 0).
+    },
   },
-  // abiExporter: {
-  //   path: './build/abis',
-  //   clear: false,
-  //   flat: true,
-  // },
-  // contractSizer: {
-  //   alphaSort: true,
-  //   runOnCompile: false,
-  //   disambiguatePaths: true,
-  // },
-}
+};
 
-export default config
+export default config;
