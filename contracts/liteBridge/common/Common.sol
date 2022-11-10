@@ -12,7 +12,7 @@ contract Structs {
 }
 
 contract Common is Structs {
-    address public nativeToken = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    address public constant NATIVE_TOKEN = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     
     bytes32 public constant UPDATE_EXCHANGE_PRICE = keccak256("UPDATE_EXCHANGE_PRICE");
     bytes32 public constant DEPOSIT = keccak256("DEPOSIT");

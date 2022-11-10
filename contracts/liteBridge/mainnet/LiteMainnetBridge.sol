@@ -51,7 +51,7 @@ contract LiteMainnetBridge is AdminModule {
     ) external /* onlyRebalancer */ {
         rootChainManager.exit(inputData);
 
-        if (token == nativeToken) {
+        if (token == NATIVE_TOKEN) {
             // deposit into weth
             // give allowance
         } else {
@@ -70,7 +70,7 @@ contract LiteMainnetBridge is AdminModule {
         address token,
         uint256 amount
     ) external /* onlyRebalancer */ {
-        if (token == nativeToken) {
+        if (token == NATIVE_TOKEN) {
             // deposit into weth
             // give allowance
         } else {
@@ -117,7 +117,7 @@ contract LiteMainnetBridge is AdminModule {
             uint256 amount_ = amounts[i];
             address token_ = tokens[i];
             IiTokenVault(rootVault_).withdraw(amount_, address(this));
-            if(token_ == nativeToken) {
+            if(token_ == NATIVE_TOKEN) {
                 // Check balance of wETH and stETH
                 // Convert wETH and stETH into ETH
                 uint256 ethAmount = 0; // balance of wETH and stETH

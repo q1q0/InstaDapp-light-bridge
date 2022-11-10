@@ -13,6 +13,11 @@ abstract contract FxBaseChildTunnel is VariablesV1 {
     // MessageTunnel on L1 will get data from this event
     event MessageSent(bytes message);
 
+    modifier validateSender(address sender) {
+        require(sender == liteBridgeRoot, "invalid-sender");
+        _;
+    }
+
     function processMessageFromRoot(
         uint256 stateId,
         address rootMessageSender,
