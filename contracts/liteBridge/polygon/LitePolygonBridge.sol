@@ -14,7 +14,7 @@ abstract contract FxBaseChildTunnel is VariablesV1 {
     event MessageSent(bytes message);
 
     modifier validateSender(address sender) {
-        require(sender == liteBridgeRoot, "invalid-sender");
+        require(sender == address(this), "invalid-sender");
         _;
     }
 
@@ -55,7 +55,7 @@ abstract contract FxBaseChildTunnel is VariablesV1 {
         bytes memory message
     ) internal virtual;
 
-    constructor(address _fxChild, address _liteBridgeRoot) VariablesV1(_fxChild, _liteBridgeRoot) {}
+    constructor(address _fxChild) VariablesV1(_fxChild) {}
 }
 
 abstract contract AdminModule is FxBaseChildTunnel {
@@ -66,7 +66,7 @@ abstract contract AdminModule is FxBaseChildTunnel {
         rebalancer[_account] = flag;
     }
 
-    constructor(address _fxChild, address _liteBridgeRoot) FxBaseChildTunnel(_fxChild, _liteBridgeRoot) {}
+    constructor(address _fxChild) FxBaseChildTunnel(_fxChild) {}
 }
 
 contract LitePolygonBridge is AdminModule {
@@ -118,6 +118,6 @@ contract LitePolygonBridge is AdminModule {
         // Emit event
     }
 
-    constructor(address _fxChild, address _liteBridgeRoot) AdminModule(_fxChild, _liteBridgeRoot) {}
+    constructor(address _fxChild) AdminModule(_fxChild) {}
 
 }
