@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-contract LiteBridgeChild is TransparentUpgradeableProxy {
+contract LiteBridgeProxy is TransparentUpgradeableProxy {
     constructor(address _logic, bytes memory _data)
         TransparentUpgradeableProxy(_logic, msg.sender, _data)
     {}
