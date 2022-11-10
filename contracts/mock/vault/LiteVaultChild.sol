@@ -6,9 +6,11 @@ pragma solidity ^0.8.17;
 import "./Common.sol";
 
 abstract contract BridgeModule is BaseIToken {
+    constructor(address underlyingToken_, address liteBridgeContract_, bool isEthVault_) BaseIToken(underlyingToken_, liteBridgeContract_, isEthVault_){}
+
 
     function updateExchangePrice(uint256 exchangePrice_) public {
-        require(msg.sender == liteBridgeContract, "not-bridge-contract");
+        require(msg.sender == LITE_BRIDGE_CONTRACT, "not-bridge-contract");
         require(exchangePrice_ >= exchangePrice);
         exchangePrice = exchangePrice_;
 
@@ -16,22 +18,23 @@ abstract contract BridgeModule is BaseIToken {
     }
 
     function toMainnet() public returns(uint256 amount) {
-        require(msg.sender == liteBridgeContract, "not-bridge-contract");
+        require(msg.sender == LITE_BRIDGE_CONTRACT, "not-bridge-contract");
         amount = UNDERLYING_TOKEN.balanceOf(address(this)) * 9 / 10;
-        UNDERLYING_TOKEN.transfer(liteBridgeContract, amount); // Sends only 90% of the funds
+        UNDERLYING_TOKEN.transfer(msg.sender, amount); // Sends only 90% of the funds
         // Event is emitted
     }
 
     function fromMainnet(uint256 amount) public {
-        require(msg.sender == liteBridgeContract, "not-bridge-contract");
+        require(msg.sender == LITE_BRIDGE_CONTRACT, "not-bridge-contract");
        
-        UNDERLYING_TOKEN.transferFrom(liteBridgeContract, address(this), amount);
+        UNDERLYING_TOKEN.transferFrom(msg.sender, address(this), amount);
         // Event is emitted
     }
 
 }
 
 contract UserModule is BridgeModule {
+    constructor(address underlyingToken_, address liteBridgeContract_, bool isEthVault_) BridgeModule(underlyingToken_, liteBridgeContract_, isEthVault_){}
 
     function supply(
         uint256 amount_,
@@ -56,5 +59,7 @@ contract UserModule is BridgeModule {
 }
 
 contract LiteVaultChild is UserModule {
+    constructor(address underlyingToken_, address liteBridgeContract_, bool isEthVault_) UserModule(underlyingToken_, liteBridgeContract_, isEthVault_){}
+ 
 
 } 
