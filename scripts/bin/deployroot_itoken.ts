@@ -1,7 +1,7 @@
 import '@nomiclabs/hardhat-ethers'
 import { ethers } from 'hardhat'
 import * as dotenv from "dotenv";
-import * as config  from "../config/config.json";
+import * as config  from "../../config/config.json";
 import { upgrades } from "hardhat"
 
 dotenv.config();
