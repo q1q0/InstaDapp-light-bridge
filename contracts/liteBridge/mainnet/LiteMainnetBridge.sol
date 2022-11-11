@@ -8,12 +8,10 @@ import "./Variables.sol";
 import "./interface/IiToken.sol";
 
 /*
- - Fix all the compiler errors
  - Add Ownable logics
  - Add admin functions
  - Add onlyRebalancer modifier
  - Add events
- - Fill IiToken interface file
 */
 
 
@@ -27,10 +25,16 @@ contract AdminModule is VariablesV1 {
 
     constructor(
         address _rootChainManager,
-        address _fxRoot
+        address _fxRoot,
+        address _wETH,
+        address _stETH,
+        address _oneInchAddress
     ) VariablesV1 (
         _rootChainManager,
-        _fxRoot
+        _fxRoot,
+        _wETH,
+        _stETH,
+        _oneInchAddress
     ) {}
 }
 
@@ -48,34 +52,22 @@ contract LiteMainnetBridge is AdminModule {
         uint256 amount
     ) external /* onlyRebalancer */ {
         rootChainManager.exit(inputData);
-
-        if (token == NATIVE_TOKEN) {
-            // deposit into weth
-            // give allowance
-        } else {
-            // give allowance
-        }
-
-
-        uint256 iTokenAmount_ = IiTokenVault(vault).supply(token, amount, address(this));
-        // optional - send exchangeRate to polygon of the vault
-
-        // emit event
+        depositToVault(vault, token, amount);
     }
 
     function depositToVault( // rename function
         address vault,
         address token,
         uint256 amount
-    ) external /* onlyRebalancer */ {
+    ) public /* onlyRebalancer */ {
+        uint256 iTokenAmount_;
         if (token == NATIVE_TOKEN) {
-            // deposit into weth
-            // give allowance
+            iTokenAmount_ = IiTokenVault(vault).supplyEth{value: amount}(address(this));
         } else {
-            // give allowance
+            IERC20(token).safeApprove(vault, amount);
+            iTokenAmount_ = IiTokenVault(vault).supply(token, amount, address(this));
         }
 
-        uint256 iTokenAmount_ = IiTokenVault(vault).supply(token, amount, address(this));
 
         // optional - send exchangeRate to polygon of the vault
 
@@ -83,7 +75,8 @@ contract LiteMainnetBridge is AdminModule {
     }
 
     function updateExchangeRate(
-        address[] memory rootVaults
+        address[] memory rootVaults,
+        address[] memory rootToChainVaults
     ) external /* onlyRebalancer */ {
         uint256 length_ = rootVaults.length;
         ExchangePriceData[] memory exchangePrices_ = new ExchangePriceData[](length_);
@@ -91,7 +84,8 @@ contract LiteMainnetBridge is AdminModule {
             address rootVault_ = rootVaults[i];
             (exchangePrices_[i].exchangePrice, ) = IiTokenVault(rootVault_).getCurrentExchangePrice();
             exchangePrices_[i].rootVault = rootVault_;
-            exchangePrices_[i].childVault = rootToChainVault[rootVault_];
+            // exchangePrices_[i].childVault = rootToChainVault[rootVault_]; // TODO:
+            exchangePrices_[i].childVault = rootToChainVaults[i];
         }
         _sendMessageToChild(
             abi.encode(
@@ -107,21 +101,35 @@ contract LiteMainnetBridge is AdminModule {
     function withdraw(
         address[] memory rootVaults,
         address[] memory tokens,
-        uint256[] memory amounts
+        uint256[] memory amounts,
+        bytes memory oneInchSwapCalldata
     ) external {
         uint256 length_ = rootVaults.length;
         for(uint256 i = 0; i < length_; i++) {
             address rootVault_ = rootVaults[i];
-            uint256 amount_ = amounts[i];
             address token_ = tokens[i];
+            uint256 amount_ = amounts[i];
             IiTokenVault(rootVault_).withdraw(amount_, address(this));
             if(token_ == NATIVE_TOKEN) {
-                // Check balance of wETH and stETH
-                // Convert wETH and stETH into ETH
-                uint256 ethAmount = 0; // balance of wETH and stETH
-                rootChainManager.depositEtherFor{value: amount_}(address(this));
+                uint256 stETHBalance_ = stETH.balanceOf(address(this));
+                uint256 ethBalance_ = address(this).balance;
+                if (stETHBalance_ > 0) {
+                    // TODO: swap and depeg logics
+                    stETH.safeApprove(oneInchAddress, stETHBalance_);
+                    Address.functionCall(oneInchAddress, oneInchSwapCalldata, "steth-1inch-swap-failed");
+
+                    uint256 ethBalanceAfterSwap_ = address(this).balance;
+                    uint256 ethAmountFromSwap_ = ethBalanceAfterSwap_ - ethBalance_;
+                    ethBalance_ = ethBalanceAfterSwap_;
+
+                    uint256 depegPercentage_ = ethAmountFromSwap_ * 1e4 / stETHBalance_;
+
+                    require(depegPercentage_ >= 0.995 * 1e4, "steth-high-depeg"); // 0.5% depeg  // TODO: move it
+                }
+
+                rootChainManager.depositEtherFor{value: ethBalance_}(address(this));
             } else {
-                // Approve
+                IERC20(token_).safeApprove(address(rootChainManager), amount_);
                 rootChainManager.depositFor(address(this), token_, abi.encode(amount_));
             }
         }
@@ -135,9 +143,15 @@ contract LiteMainnetBridge is AdminModule {
 
     constructor(
         address _rootChainManager,
-        address _fxRoot
+        address _fxRoot,
+        address _wETH,
+        address _stETH,
+        address _oneInchAddress
     ) AdminModule (
         _rootChainManager,
-        _fxRoot
+        _fxRoot,
+        _wETH,
+        _stETH,
+        _oneInchAddress
     ) {}
 }
