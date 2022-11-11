@@ -51,23 +51,27 @@ const config: HardhatUserConfig = {
     mainnet: {
       ...sharedNetworkConfig,
       url: "https://eth-mainnet.g.alchemy.com/v2/" + ALCHEMY_TOKEN_MAINNET,
+      chainId: 1
     },
     polygon: {
       ...sharedNetworkConfig,
       url: "https://polygon-mainnet.g.alchemy.com/v2/" + ALCHEMY_TOKEN_POLYGON,
+      chainId: 137
     },
     avalanche: {
       ...sharedNetworkConfig,
-      url:
-        "https://rpc.ankr.com/avalanche",
+      url: "https://rpc.ankr.com/avalanche",
+      chainId: 43114
     },
     goerli: {
       ...sharedNetworkConfig,
       url: "https://rpc.ankr.com/eth_goerli",
+      chainId: 5
     },
     mumbai: {
       ...sharedNetworkConfig,
       url: "https://rpc.ankr.com/polygon_mumbai",
+      chainId: 80001
     },
     coverage: {
       url: "http://127.0.0.1:8555", // Coverage launches its own ganache-cli client
