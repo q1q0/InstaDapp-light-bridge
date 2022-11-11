@@ -17,15 +17,14 @@ abstract contract BridgeModule is BaseIToken {
         // Event is emitted
     }
 
-    function toMainnet() public returns(uint256 amount) {
-        require(msg.sender == LITE_BRIDGE_CONTRACT, "not-bridge-contract");
-        amount = UNDERLYING_TOKEN.balanceOf(address(this)) * 9 / 10;
-        UNDERLYING_TOKEN.transfer(msg.sender, amount); // Sends only 90% of the funds
+    function toMainnet(uint256 amount) public {
+        // require(msg.sender == LITE_BRIDGE_CONTRACT, "not-bridge-contract"); // TODO: add this
+        UNDERLYING_TOKEN.transfer(msg.sender, amount);
         // Event is emitted
     }
 
     function fromMainnet(uint256 amount) public {
-        require(msg.sender == LITE_BRIDGE_CONTRACT, "not-bridge-contract");
+        // require(msg.sender == LITE_BRIDGE_CONTRACT, "not-bridge-contract"); // TODO: add this
        
         UNDERLYING_TOKEN.transferFrom(msg.sender, address(this), amount);
         // Event is emitted

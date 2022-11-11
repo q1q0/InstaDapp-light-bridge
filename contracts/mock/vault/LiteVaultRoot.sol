@@ -74,6 +74,9 @@ contract UserModule is BaseIToken {
 }
 
 contract MockLiteVaultRoot is UserModule {
+
+    receive() external payable {}
+
     constructor(address underlyingToken_, address liteBridgeContract_, bool isEthVault_) UserModule(underlyingToken_, liteBridgeContract_, isEthVault_){}
 
 } 
