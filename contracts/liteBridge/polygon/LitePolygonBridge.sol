@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./interface/IChildChainManager.sol";
+import "./interface/IChildVault.sol";
 import "./interface/IiTokenPolygon.sol";
 
 import "./Variables.sol";
@@ -113,6 +114,8 @@ contract LitePolygonBridge is AdminModule {
         uint256 amount
     ) public /* OnlyRebalancer */ {
         // Add balance condition
+
+        IChildVault(vault).toMainnet(amount);
         IChildChainManager(token).withdraw(amount);
 
         // Emit event
