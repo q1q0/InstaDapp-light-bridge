@@ -15,14 +15,15 @@ contract UserModule is BaseIToken {
 
     constructor(address underlyingToken_, address liteBridgeContract_, bool isEthVault_) BaseIToken(underlyingToken_, liteBridgeContract_, isEthVault_){}
 
-    function getExchangePrice() public view returns(uint256) {
+    function getCurrentExchangePrice() public view returns(uint256, uint256) {
         // add some updateExchange logic
-        return exchangePrice;
+        return (exchangePrice, 0);
     }
 
     function updateExchangePrice(uint256 exchangePrice_) public returns(uint256) {
         // add some updateExchange logic
         exchangePrice = exchangePrice_;
+        return exchangePrice;
     }
 
     function withdraw(uint256 amount, address to)

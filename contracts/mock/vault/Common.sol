@@ -12,7 +12,7 @@ contract BaseIToken is ERC20Upgradeable {
     address public immutable LITE_BRIDGE_CONTRACT;
     bool public immutable ETH_VAULT;
     
-    uint256 internal exchangePrice;
+    uint256 public exchangePrice;
 
     constructor(address underlyingToken_, address liteBridgeContract_, bool isEthVault_) {
         UNDERLYING_TOKEN = IERC20(underlyingToken_);
