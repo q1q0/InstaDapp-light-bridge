@@ -79,18 +79,33 @@ contract LitePolygonBridge is AdminModule {
 
     receive() external payable {}
 
+    event LogUpdatedExchangePrice(
+        uint256 indexed id,
+        address indexed vault,
+        uint256 exchangePrice
+    );
+
+    event LogMessageReceived (
+        uint256 indexed stateId,
+        uint256 indexed id,
+        bytes32 indexed key
+    );
+
     function _processMessageFromRoot(
-        uint256,
+        uint256 stateId,
         address sender,
         bytes memory data
     ) internal override /* validateSender(sender) */ {
         (bytes32 key_, uint256 id_, bytes memory encodedRootData_) = abi.decode(data, (bytes32, uint256, bytes));
+        emit LogMessageReceived(stateId, id_, key_);
+        
         if(key_ == UPDATE_EXCHANGE_PRICE) {
             ExchangePriceData[] memory exchangePriceDatas_ = abi.decode(encodedRootData_, (ExchangePriceData[]));
             uint256 length_ = exchangePriceDatas_.length;
             for (uint256 i = 0; i < length_; i++) {
                 // require
                 IiTokenVaultPolygon(exchangePriceDatas_[i].childVault).updateExchangePrice(exchangePriceDatas_[i].exchangePrice);
+                emit LogUpdatedExchangePrice(id_, exchangePriceDatas_[i].childVault, exchangePriceDatas_[i].exchangePrice);
             }
         }
     }
