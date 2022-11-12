@@ -9,12 +9,14 @@ import {
     waitTx,
     CONSTANTS,
     getMode,
-    Mode
+    Mode,
+    getChildChainId
 } from "../common/utlis"
 
 async function main() {
 
     const chainId = await getChainId();
+    const childChainId = await getChildChainId()
     const signer = (await ethers.getSigners())[0]
 
     if (hre.network.name === 'mainnet') {
@@ -45,7 +47,7 @@ async function main() {
 
     let tx = await waitTx(liteMainnetBridge.updateExchangeRate(
         [CONFIG.MOCK_VAULT_ETH[chainId], CONFIG.MOCK_VAULT_TOKEN[chainId]],
-        [CONFIG.MOCK_VAULT_ETH["80001"], CONFIG.MOCK_VAULT_TOKEN["80001"]],
+        [CONFIG.MOCK_VAULT_ETH[childChainId], CONFIG.MOCK_VAULT_TOKEN[childChainId]],
     ))
     console.log("Updated ExchangePrice Transaction", tx)
 }

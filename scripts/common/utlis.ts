@@ -5,6 +5,12 @@ import { ContractTransaction } from "ethers";
 const CONSTANTS = {
     nativeToken: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
 }
+
+const rootToChainChainId: Record<string, string> = {
+    "1": "137",
+    "5": "80001"
+}
+
 const deployContract = async (contractName: string, constructorArgs: any = [], options: any = [], blockConfirmation?: number) => {
   const Contract = await ethers.getContractFactory(contractName)
   const contract = await Contract.deploy(...constructorArgs, ...options)
@@ -18,6 +24,11 @@ const deployContract = async (contractName: string, constructorArgs: any = [], o
 
 const getChainId = async (): Promise<string> => {
     return  (hre.network.config.chainId || (await ethers.provider.getNetwork()).chainId).toString();
+}
+
+const getChildChainId = async (): Promise<string> => {
+    const rootChainId = (hre.network.config.chainId || (await ethers.provider.getNetwork()).chainId).toString()
+    return rootToChainChainId[rootChainId];
 }
 
 const waitTx = async (contractCall: Promise<ContractTransaction>, blockConfirmation?: number, log: boolean = false): Promise<string> =>{
@@ -40,8 +51,10 @@ const getMode = async (): Promise<Mode> => {
 export {
     deployContract,
     getChainId,
+    getChildChainId,
     waitTx,
     getMode,
     Mode,
-    CONSTANTS
+    CONSTANTS,
+    rootToChainChainId
 }
