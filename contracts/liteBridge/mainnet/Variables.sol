@@ -22,6 +22,8 @@ contract VariablesV1 is Common {
     IERC20 public immutable stETH;
     address public immutable oneInchAddress;
 
+    uint256 public bridgeNonce;
+
     mapping (address => address) public rootToChainVault;
 
     mapping (address => bool) public rebalancer;
