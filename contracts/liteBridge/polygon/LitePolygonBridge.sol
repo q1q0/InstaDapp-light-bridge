@@ -87,7 +87,7 @@ contract LitePolygonBridge is AdminModule {
 
     event LogMessageReceived (
         uint256 indexed stateId,
-        uint256 indexed id,
+        uint256 indexed bridgeNonce,
         bytes32 indexed key
     );
 
@@ -96,17 +96,35 @@ contract LitePolygonBridge is AdminModule {
         address sender,
         bytes memory data
     ) internal override /* validateSender(sender) */ {
-        (bytes32 key_, uint256 id_, bytes memory encodedRootData_) = abi.decode(data, (bytes32, uint256, bytes));
-        emit LogMessageReceived(stateId, id_, key_);
-        
-        if(key_ == UPDATE_EXCHANGE_PRICE) {
-            ExchangePriceData[] memory exchangePriceDatas_ = abi.decode(encodedRootData_, (ExchangePriceData[]));
-            uint256 length_ = exchangePriceDatas_.length;
-            for (uint256 i = 0; i < length_; i++) {
-                // require
-                IiTokenVaultPolygon(exchangePriceDatas_[i].childVault).updateExchangePrice(exchangePriceDatas_[i].exchangePrice);
-                emit LogUpdatedExchangePrice(id_, exchangePriceDatas_[i].childVault, exchangePriceDatas_[i].exchangePrice);
+        (bytes32 key_, uint256 bridgeNonce_, bytes memory encodedRootData_) = abi.decode(data, (bytes32, uint256, bytes));
+        emit LogMessageReceived(stateId, bridgeNonce_, key_);
+
+        bridgeNonceToData[bridgeNonce_] = StateData(
+            0,
+            key_,
+            encodedRootData_
+        );
+    }
+
+    function processUpdateExchangePrice(uint256[] memory bridgeNonces) public {
+        for (uint256 i = 0; i < bridgeNonces.length; i++) {
+            StateData memory stateData_ = bridgeNonceToData[bridgeNonces[i]];
+            require(stateData_.isExecuted == 0, "already-updated");
+            // require
+            if(stateData_.key == UPDATE_EXCHANGE_PRICE) {
+                ExchangePriceData memory exchangePriceData_ = abi.decode(stateData_.data, (ExchangePriceData));
+                IiTokenVaultPolygon(exchangePriceData_.childVault).updateExchangePrice(exchangePriceData_.exchangePrice);
+                emit LogUpdatedExchangePrice(bridgeNonces[i], exchangePriceData_.childVault, exchangePriceData_.exchangePrice);
+            } else if (false) { //
+                ExchangePriceData[] memory exchangePriceDatas_ = abi.decode(stateData_.data, (ExchangePriceData[]));
+                uint256 length_ = exchangePriceDatas_.length;
+                for (uint256 j = 0; j < length_; j++) {
+                    // require
+                    IiTokenVaultPolygon(exchangePriceDatas_[j].childVault).updateExchangePrice(exchangePriceDatas_[j].exchangePrice);
+                    emit LogUpdatedExchangePrice(bridgeNonces[i], exchangePriceDatas_[j].childVault, exchangePriceDatas_[j].exchangePrice);
+                }
             }
+            bridgeNonceToData[bridgeNonces[i]].isExecuted = 1;
         }
     }
 

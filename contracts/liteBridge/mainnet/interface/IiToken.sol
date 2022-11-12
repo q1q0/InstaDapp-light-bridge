@@ -11,4 +11,8 @@ interface IiTokenVault {
     function supplyEth(address to) external payable returns(uint256);
     function withdraw(uint256 amount_, address to_) external returns(uint256);
     function getCurrentExchangePrice() external view returns(uint256, uint256);
+
+    // Mock
+
+    function updateExchangePrice() external returns(uint256);
 }
