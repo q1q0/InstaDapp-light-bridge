@@ -16,6 +16,14 @@ contract VariablesV1 is Common {
     // // Lite Bridge Contract Child
     // address public immutable liteBridgeRoot;
 
+    struct StateData {
+        uint8 isExecuted;
+        bytes32 key;
+        bytes data;
+    }
+    
+    mapping (uint256 => StateData) public bridgeNonceToData;
+
     mapping (address => address) public childToRootVault;
 
     mapping (address => bool) public rebalancer;
