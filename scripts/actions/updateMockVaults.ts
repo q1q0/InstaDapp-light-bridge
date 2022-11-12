@@ -45,7 +45,8 @@ async function main() {
     ]
     const mockLiteVaultRoot = await deployContract('MockLiteVaultRoot', mockLiteVaultRootArgs)
 
-    let tx = await waitTx(liteProxyAdmin.upgrade(CONFIG.MOCK_VAULT_ETH[chainId], mockLiteVaultRoot.address), 4)
+    let tx = await waitTx(liteProxyAdmin.upgrade(CONFIG.MOCK_VAULT_ETH[chainId], mockLiteVaultRoot.address))
+    tx = await waitTx(liteProxyAdmin.upgrade(CONFIG.MOCK_VAULT_TOKEN[chainId], mockLiteVaultRoot.address), 4)
 
     if (hre.network.name !== 'hardhat') {
         try {
@@ -72,7 +73,8 @@ async function main() {
       ]
     const mockLiteVaultChild = await deployContract('MockLiteVaultChild', mockLiteVaultChildArgs)
 
-    let tx = await waitTx(liteProxyAdmin.upgrade(CONFIG.MOCK_VAULT_ETH[chainId], mockLiteVaultChild.address), 12)
+    let tx = await waitTx(liteProxyAdmin.upgrade(CONFIG.MOCK_VAULT_ETH[chainId], mockLiteVaultChild.address))
+    tx = await waitTx(liteProxyAdmin.upgrade(CONFIG.MOCK_VAULT_TOKEN[chainId], mockLiteVaultChild.address), 12)
 
     if (hre.network.name !== 'hardhat') {
         try {
