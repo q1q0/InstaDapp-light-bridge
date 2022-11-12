@@ -128,18 +128,38 @@ contract LitePolygonBridge is AdminModule {
         }
     }
 
+
+    event LogFromMainnet(
+        address indexed rootVault,
+        address indexed childVault,
+        address indexed token,
+        uint256 amont
+    );
+
     function processFromMainnet(
         address vault,
         address token,
-        uint256 amount,
-        bool processWithdral
+        uint256 amount
     ) public /* OnlyRebalancer */ {
 
         IERC20(token).safeApprove(vault, amount);
         IiTokenVaultPolygon(vault).fromMainnet(amount);
 
         // Emit event
+        emit LogFromMainnet(
+            vault,
+            vault,
+            token,
+            amount
+        );
     }
+
+    event LogToMainnet(
+        address indexed rootVault,
+        address indexed childVault,
+        address indexed token,
+        uint256 amont
+    );
 
     function processToMainnet(
         address vault,
@@ -152,6 +172,12 @@ contract LitePolygonBridge is AdminModule {
         IChildChainManager(token).withdraw(amount);
 
         // Emit event
+        emit LogToMainnet(
+            vault,
+            vault,
+            token,
+            amount
+        );
     }
 
     constructor(address _fxChild) AdminModule(_fxChild) {}
