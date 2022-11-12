@@ -74,6 +74,13 @@ contract LiteMainnetBridge is AdminModule {
         // emit event
     }
 
+    event LogUpdateExchangePrice(
+        uint256 indexed bridgeNonce,
+        address indexed rootVault,
+        address indexed childVault,
+        uint256 exchangePrice
+    );
+
     function updateExchangeRate(
         address[] memory rootVaults,
         address[] memory rootToChainVaults
@@ -82,18 +89,28 @@ contract LiteMainnetBridge is AdminModule {
         ExchangePriceData[] memory exchangePrices_ = new ExchangePriceData[](length_);
         for(uint256 i = 0; i < length_; i++) {
             address rootVault_ = rootVaults[i];
-            (exchangePrices_[i].exchangePrice, ) = IiTokenVault(rootVault_).getCurrentExchangePrice();
-            exchangePrices_[i].rootVault = rootVault_;
-            // exchangePrices_[i].childVault = rootToChainVault[rootVault_]; // TODO:
-            exchangePrices_[i].childVault = rootToChainVaults[i];
+            ExchangePriceData memory exchangePriceData;
+            // mock 
+            IiTokenVault(rootVault_).updateExchangePrice();
+            // mock
+            (exchangePriceData.exchangePrice, ) = IiTokenVault(rootVault_).getCurrentExchangePrice();
+            exchangePriceData.rootVault = rootVault_;
+            // exchangePriceData.childVault = rootToChainVault[rootVault_]; // TODO:
+            exchangePriceData.childVault = rootToChainVaults[i];
+            _sendMessageToChild(
+                abi.encode(
+                    UPDATE_EXCHANGE_PRICE,
+                    ++bridgeNonce,
+                    abi.encode(exchangePriceData)
+                )
+            );
+            emit LogUpdateExchangePrice(
+                bridgeNonce,
+                rootVault_,
+                rootToChainVaults[i],
+                exchangePriceData.exchangePrice
+            );
         }
-        _sendMessageToChild(
-            abi.encode(
-                UPDATE_EXCHANGE_PRICE,
-                1,
-                abi.encode(exchangePrices_)
-            )
-        );
 
         // emit event
     }
