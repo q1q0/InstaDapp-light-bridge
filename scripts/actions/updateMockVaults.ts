@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import {ethers} from "hardhat";
 
-import CONFIG from "../common//config"
+import CONFIG from "../common/config"
 
 import {
     getChainId,
