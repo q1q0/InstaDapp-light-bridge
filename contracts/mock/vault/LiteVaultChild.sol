@@ -10,7 +10,7 @@ abstract contract BridgeModule is BaseIToken {
 
 
     function updateExchangePrice(uint256 exchangePrice_) public {
-        require(msg.sender == LITE_BRIDGE_CONTRACT, "not-bridge-contract");
+        // require(msg.sender == LITE_BRIDGE_CONTRACT, "not-bridge-contract");
         require(exchangePrice_ >= exchangePrice);
         exchangePrice = exchangePrice_;
 
