@@ -44,7 +44,7 @@ enum Mode {
 }
 
 const getMode = async (): Promise<Mode> => {
-    return ["1", "5"].includes((await getChainId())) ? Mode.ROOT : Mode.CHILD
+    return Object.keys(rootToChainChainId).includes((await getChainId())) ? Mode.ROOT : Mode.CHILD
 }
 
 
