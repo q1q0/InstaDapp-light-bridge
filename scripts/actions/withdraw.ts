@@ -34,7 +34,7 @@ async function main() {
     }
 
     const wethContract = await ethers.getContractAt("IERC20", CONFIG.WETH_ADDRESS[chainId])
-    const mockLiteVaultRoot = await ethers.getContractAt("MockLiteVaultRoot", CONFIG.MOCK_VAULT[chainId])    
+    const mockLiteVaultRoot = await ethers.getContractAt("MockLiteVaultRoot", CONFIG.MOCK_VAULT_ETH[chainId])    
     const liteMainnetBridge = await ethers.getContractAt("LiteMainnetBridge", CONFIG.LITE_BRIDGE[chainId])    
 
 
@@ -43,7 +43,7 @@ async function main() {
 
     let txHash = await waitTx(
         liteMainnetBridge.withdraw(
-            [CONFIG.MOCK_VAULT[chainId]],
+            [CONFIG.MOCK_VAULT_ETH[chainId]],
             [CONSTANTS.nativeToken],
             [amount],
             "0x"

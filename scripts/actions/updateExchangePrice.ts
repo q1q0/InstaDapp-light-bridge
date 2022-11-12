@@ -38,8 +38,8 @@ async function main() {
     const liteMainnetBridge = await ethers.getContractAt("LiteMainnetBridge", CONFIG.LITE_BRIDGE[chainId])    
     const lengthOfVaults = 5
     let tx = await waitTx(liteMainnetBridge.updateExchangeRate(
-        Array(lengthOfVaults).fill(CONFIG.MOCK_VAULT[chainId]),
-        Array(lengthOfVaults).fill(CONFIG.MOCK_VAULT["80001"])
+        Array(lengthOfVaults).fill(CONFIG.MOCK_VAULT_ETH[chainId]),
+        Array(lengthOfVaults).fill(CONFIG.MOCK_VAULT_ETH["80001"])
     ))
     console.log("Updated ExchangePrice Transaction", tx)
 }

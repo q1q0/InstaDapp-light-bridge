@@ -76,7 +76,7 @@ async function main() {
     
     const txHash = await waitTx(liteMainnetBridge.deposit(
         proof,
-        CONFIG.MOCK_VAULT[chainId],
+        CONFIG.MOCK_VAULT_ETH[chainId],
         CONSTANTS.nativeToken,
         amount
     ))

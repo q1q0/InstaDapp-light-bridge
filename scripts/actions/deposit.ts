@@ -34,7 +34,7 @@ async function main() {
     }
 
     const wethContract = await ethers.getContractAt("IERC20", CONFIG.WETH_ADDRESS[chainId])
-    const mockLiteVaultChild = await ethers.getContractAt("MockLiteVaultChild", CONFIG.MOCK_VAULT[chainId])    
+    const mockLiteVaultChild = await ethers.getContractAt("MockLiteVaultChild", CONFIG.MOCK_VAULT_ETH[chainId])    
     const litePolygonBridge = await ethers.getContractAt("LitePolygonBridge", CONFIG.LITE_BRIDGE[chainId])    
     const amount = "100000000000000"
 
@@ -43,7 +43,7 @@ async function main() {
 
     console.log("Deposited Transaction", tx)
 
-    tx = await waitTx(litePolygonBridge.processToMainnet(CONFIG.MOCK_VAULT[chainId], CONSTANTS.nativeToken, amount))
+    tx = await waitTx(litePolygonBridge.processToMainnet(CONFIG.MOCK_VAULT_ETH[chainId], CONSTANTS.nativeToken, amount))
 
     console.log("Burn Transaction", tx)
 }
