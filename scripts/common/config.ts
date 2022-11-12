@@ -12,8 +12,8 @@ const CONFIG: Record<string, Record<string, string | any>> =  {
         "1": "0xE9C50782d354b1f83c7c56c50C5230873B608F0F"
     },
     "MOCK_VAULT_TOKEN": {
-        "80001": "0x8cab79f95690532972cda4f67d14520f9f492cbc",
-        "5": "0x6518B17D0A54455d347F2dAABcC9992f31F5a8Cb",
+        "80001": "0x58287d6B5F0766b7919F17efa79f8a44c35f1A11",
+        "5": "0xae0eE80B1622c8Ee695AeA44055990aa494C6d10",
         "137": "0xE9C50782d354b1f83c7c56c50C5230873B608F0F",
         "1": "0xE9C50782d354b1f83c7c56c50C5230873B608F0F"
     },
