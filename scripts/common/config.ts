@@ -5,7 +5,13 @@ const CONFIG: Record<string, Record<string, string | any>> =  {
         "137": "0xE9C50782d354b1f83c7c56c50C5230873B608F0F",
         "1": "0xE9C50782d354b1f83c7c56c50C5230873B608F0F"
     },
-    "MOCK_VAULT": {
+    "MOCK_VAULT_ETH": {
+        "80001": "0x8cab79f95690532972cda4f67d14520f9f492cbc",
+        "5": "0x6518B17D0A54455d347F2dAABcC9992f31F5a8Cb",
+        "137": "0xE9C50782d354b1f83c7c56c50C5230873B608F0F",
+        "1": "0xE9C50782d354b1f83c7c56c50C5230873B608F0F"
+    },
+    "MOCK_VAULT_TOKEN": {
         "80001": "0x8cab79f95690532972cda4f67d14520f9f492cbc",
         "5": "0x6518B17D0A54455d347F2dAABcC9992f31F5a8Cb",
         "137": "0xE9C50782d354b1f83c7c56c50C5230873B608F0F",
@@ -16,6 +22,12 @@ const CONFIG: Record<string, Record<string, string | any>> =  {
         "5": "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6",
         "137": "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
         "80001": "0xA6FA4fB5f76172d178d61B04b0ecd319C5d1C0aa"
+    },
+    "TOKEN_ADDRESS": {
+        "1": "",
+        "5": "0x655F2166b0709cd575202630952D71E2bB0d61Af",
+        "137": "",
+        "80001": "0xfe4f5145f6e09952a5ba9e956ed0c25e3fa4c7f1"
     },
     "PROXY_ADMIN": {
         "80001": "0xeAE2289A1040Ae322466c346a73A0a81366FfBC3",
