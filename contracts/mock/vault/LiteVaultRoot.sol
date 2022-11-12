@@ -26,6 +26,12 @@ contract UserModule is BaseIToken {
         return exchangePrice;
     }
 
+    function updateExchangePrice() public returns(uint256) {
+        // add some updateExchange logic
+        exchangePrice = exchangePrice + 1e16;
+        return exchangePrice;
+    }
+
     function withdraw(uint256 amount, address to)
         external
         returns (uint256 vtokenAmount_)
