@@ -115,8 +115,17 @@ contract LiteMainnetBridge is AdminModule {
         // emit event
     }
 
+    event LogWithdrawToPolygon(
+        uint256 indexed bridgeNonce,
+        address indexed rootVault,
+        address indexed childVault,
+        address token,
+        uint256 amount
+    );
+
     function withdraw(
         address[] memory rootVaults,
+        address[] memory childVaults,
         address[] memory tokens,
         uint256[] memory amounts,
         bytes memory oneInchSwapCalldata
@@ -143,12 +152,21 @@ contract LiteMainnetBridge is AdminModule {
 
                     require(depegPercentage_ >= 0.995 * 1e4, "steth-high-depeg"); // 0.5% depeg  // TODO: move it
                 }
+                amount_ = ethBalance_;
 
                 rootChainManager.depositEtherFor{value: ethBalance_}(address(this));
             } else {
                 IERC20(token_).safeApprove(address(rootChainManager), amount_);
                 rootChainManager.depositFor(address(this), token_, abi.encode(amount_));
             }
+
+            emit LogWithdrawToPolygon(
+                ++bridgeNonce,
+                rootVault_,
+                childVaults[i],
+                token_,
+                amount_
+            );
         }
         
         // optional - send exchangeRate to polygon of the vault
