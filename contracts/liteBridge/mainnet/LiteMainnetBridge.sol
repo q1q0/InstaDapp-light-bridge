@@ -99,7 +99,7 @@ contract LiteMainnetBridge is AdminModule {
             exchangePriceData.childVault = rootToChainVaults[i];
             _sendMessageToChild(
                 abi.encode(
-                    UPDATE_EXCHANGE_PRICE,
+                    UPDATE_EXCHANGE_PRICE_SINGLE,
                     ++bridgeNonce,
                     abi.encode(exchangePriceData)
                 )

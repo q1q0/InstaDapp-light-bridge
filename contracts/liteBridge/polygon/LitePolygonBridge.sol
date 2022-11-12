@@ -111,7 +111,7 @@ contract LitePolygonBridge is AdminModule {
             StateData memory stateData_ = bridgeNonceToData[bridgeNonces[i]];
             require(stateData_.isExecuted == 0, "already-updated");
             // require
-            if(stateData_.key == UPDATE_EXCHANGE_PRICE) {
+            if(stateData_.key == UPDATE_EXCHANGE_PRICE_SINGLE) {
                 ExchangePriceData memory exchangePriceData_ = abi.decode(stateData_.data, (ExchangePriceData));
                 IiTokenVaultPolygon(exchangePriceData_.childVault).updateExchangePrice(exchangePriceData_.exchangePrice);
                 emit LogUpdatedExchangePrice(bridgeNonces[i], exchangePriceData_.childVault, exchangePriceData_.exchangePrice);
