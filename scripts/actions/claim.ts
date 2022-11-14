@@ -43,8 +43,8 @@ async function main() {
     const mainnetProvider = ethers.provider
     
     const polygonProvider = new ethers.providers.JsonRpcProvider(
-    // @ts-ignore
-        hre.userConfig.networks.mumbai.url
+        // @ts-ignore
+        chainId === "1" ?  hre.userConfig.networks.polygon.url : hre.userConfig.networks.mumbai.url
     );    
     
     const posClient = new POSClient();
@@ -54,13 +54,13 @@ async function main() {
         parent: {
             provider: ethers.provider,
             defaultConfig: {
-            from: signer.address
+                from: signer.address
             }
         },
         child: {
             provider: polygonProvider,
             defaultConfig: {
-            from: signer.address
+                from: signer.address
             }
         }
     });
