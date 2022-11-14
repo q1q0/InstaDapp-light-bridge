@@ -160,8 +160,16 @@ contract LiteMainnetBridge is AdminModule {
                 rootChainManager.depositFor(address(this), token_, abi.encode(amount_));
             }
 
+            _sendMessageToChild(
+                abi.encode(
+                    UPDATE_EXCHANGE_PRICE_SINGLE,
+                    ++bridgeNonce,
+                    abi.encode(0x00)
+                )
+            );
+
             emit LogWithdrawToPolygon(
-                ++bridgeNonce,
+                bridgeNonce,
                 rootVault_,
                 childVaults[i],
                 token_,
