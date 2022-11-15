@@ -136,7 +136,7 @@ contract LitePolygonBridge is AdminModule {
         uint256 amont
     );
 
-    function processFromMainnet(
+    function processFromMainnetSingle(
         address vault,
         address token,
         uint256 amount
@@ -152,6 +152,20 @@ contract LitePolygonBridge is AdminModule {
             token,
             amount
         );
+    }
+
+    function processFromMainnet(
+        address[] memory vaults,
+        address[] memory tokens,
+        uint256[] memory amounts
+    ) external /* OnlyRebalancer */ {
+        for (uint256 i = 0; i < vaults.length; i++) {
+            processFromMainnetSingle(
+                vaults[i],
+                tokens[i],
+                amounts[i]
+            );
+        }
     }
 
     event LogToMainnet(
