@@ -38,22 +38,39 @@ async function main() {
   if ((await getMode()) == Mode.ROOT) {
     const liteProxyAdmin = await ethers.getContractAt("LiteProxyAdmin", CONFIG.PROXY_ADMIN[chainId])
 
-    const mockLiteVaultRootArgs = [
+    const mockLiteVaultRootArgsETH = [
         CONFIG.WETH_ADDRESS[chainId],
         CONFIG.LITE_BRIDGE[chainId],
         true
     ]
-    const mockLiteVaultRoot = await deployContract('MockLiteVaultRoot', mockLiteVaultRootArgs)
+    const mockLiteVaultRootETH = await deployContract('MockLiteVaultRoot', mockLiteVaultRootArgsETH)
 
-    let tx = await waitTx(liteProxyAdmin.upgrade(CONFIG.MOCK_VAULT_ETH[chainId], mockLiteVaultRoot.address))
-    tx = await waitTx(liteProxyAdmin.upgrade(CONFIG.MOCK_VAULT_TOKEN[chainId], mockLiteVaultRoot.address), 4)
+    const mockLiteVaultRootArgsERC20 = [
+      CONFIG.WETH_ADDRESS[chainId],
+      CONFIG.LITE_BRIDGE[chainId],
+      false
+  ]
+  const mockLiteVaultRootERC20 = await deployContract('MockLiteVaultRoot', mockLiteVaultRootArgsERC20)
+
+    let tx = await waitTx(liteProxyAdmin.upgrade(CONFIG.MOCK_VAULT_ETH[chainId], mockLiteVaultRootETH.address))
+    tx = await waitTx(liteProxyAdmin.upgrade(CONFIG.MOCK_VAULT_TOKEN[chainId], mockLiteVaultRootERC20.address), 4)
 
     if (hre.network.name !== 'hardhat') {
         try {
           await hre.run('verify:verify', {
-              address: mockLiteVaultRoot.address,
+              address: mockLiteVaultRootETH.address,
               contract: "contracts/mock/vault/LiteVaultRoot.sol:MockLiteVaultRoot",
-              constructorArguments: mockLiteVaultRootArgs
+              constructorArguments: mockLiteVaultRootArgsETH
+          })
+        } catch (error) {
+          console.log(error)
+        }
+
+        try {
+          await hre.run('verify:verify', {
+              address: mockLiteVaultRootERC20.address,
+              contract: "contracts/mock/vault/LiteVaultRoot.sol:MockLiteVaultRoot",
+              constructorArguments: mockLiteVaultRootArgsERC20
           })
         } catch (error) {
           console.log(error)
