@@ -9,6 +9,12 @@ contract Structs {
        address childVault;
        uint256 exchangePrice;
     }
+
+    struct WithdrawData {
+       address rootVault;
+       address childVault;
+       uint256 amount;
+    }
 }
 
 contract Common is Structs {
@@ -18,5 +24,6 @@ contract Common is Structs {
     bytes32 public constant UPDATE_EXCHANGE_PRICE_MULTI = keccak256("UPDATE_EXCHANGE_PRICE_MULTI");
     bytes32 public constant DEPOSIT_SINGLE = keccak256("DEPOSIT_SINGLE");
     bytes32 public constant DEPOSIT_MULTI = keccak256("DEPOSIT_MULTI");
-    bytes32 public constant WITHDRAW = keccak256("WITHDRAW");
+    bytes32 public constant WITHDRAW_SINGLE = keccak256("WITHDRAW_SINGLE");
+    bytes32 public constant WITHDRAW_MULTI = keccak256("WITHDRAW_MULTI");
 }
