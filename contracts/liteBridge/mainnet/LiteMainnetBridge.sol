@@ -162,7 +162,7 @@ contract LiteMainnetBridge is AdminModule {
 
             _sendMessageToChild(
                 abi.encode(
-                    UPDATE_EXCHANGE_PRICE_SINGLE,
+                    WITHDRAW_SINGLE,
                     ++bridgeNonce,
                     abi.encode(0x00)
                 )
