@@ -20,14 +20,26 @@ abstract contract BridgeModule is BaseIToken {
     function toMainnet(uint256 amount) public {
         // require(msg.sender == LITE_BRIDGE_CONTRACT, "not-bridge-contract"); // TODO: add this
         UNDERLYING_TOKEN.transfer(msg.sender, amount);
+        investedAssets += amount;
         // Event is emitted
     }
 
     function fromMainnet(uint256 amount) public {
         // require(msg.sender == LITE_BRIDGE_CONTRACT, "not-bridge-contract"); // TODO: add this
-       
+        
+        if (amount > investedAssets) amount = investedAssets;
         UNDERLYING_TOKEN.transferFrom(msg.sender, address(this), amount);
+        investedAssets -= amount;
         // Event is emitted
+    }
+
+    function totalAssets() public view returns(uint256) {
+        return UNDERLYING_TOKEN.balanceOf(address(this)) + investedAssets;
+    }
+
+    function updateInvestedAssets(uint256 amount, bool add) public {
+        if (add) investedAssets +=  amount;
+        else investedAssets -= amount;
     }
 
 }
