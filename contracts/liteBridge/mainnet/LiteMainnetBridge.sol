@@ -95,7 +95,7 @@ contract LiteMainnetBridge is AdminModule {
             // mock
             (exchangePriceData.exchangePrice, ) = IiTokenVault(rootVault_).getCurrentExchangePrice();
             exchangePriceData.rootVault = rootVault_;
-            // exchangePriceData.childVault = rootToChainVault[rootVault_]; // TODO:
+            // exchangePriceData.childVault = rootToChainVault[rootVault_]; // TODO: mock
             exchangePriceData.childVault = rootToChainVaults[i];
             _sendMessageToChild(
                 abi.encode(
@@ -180,8 +180,6 @@ contract LiteMainnetBridge is AdminModule {
         }
         
         // optional - send exchangeRate to polygon of the vault
-
-        // emit event
     }
 
     receive() external payable {}
