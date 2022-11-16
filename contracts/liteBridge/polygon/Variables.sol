@@ -12,10 +12,6 @@ import "../common/Common.sol";
 contract VariablesV1 is Common {
     // state sender contract child
     IFxMessageProcessor public immutable fxChild;
-
-    // // Lite Bridge Contract Child
-    // address public immutable liteBridgeRoot;
-
     struct StateData {
         uint8 isExecuted;
         bytes32 key;
@@ -30,6 +26,5 @@ contract VariablesV1 is Common {
 
     constructor(address _fxChild) {
         fxChild = IFxMessageProcessor(_fxChild);
-        // liteBridgeRoot = _liteBridgeRoot;
     }
 }
