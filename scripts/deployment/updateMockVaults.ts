@@ -39,14 +39,14 @@ async function main() {
     const liteProxyAdmin = await ethers.getContractAt("LiteProxyAdmin", CONFIG.PROXY_ADMIN[chainId])
 
     const mockLiteVaultRootArgsETH = [
-        CONFIG.WETH_ADDRESS[chainId],
+        CONFIG.STETH_ADDRESS[chainId],
         CONFIG.LITE_BRIDGE[chainId],
         true
     ]
     const mockLiteVaultRootETH = await deployContract('MockLiteVaultRoot', mockLiteVaultRootArgsETH)
 
     const mockLiteVaultRootArgsERC20 = [
-      CONFIG.WETH_ADDRESS[chainId],
+      CONFIG.TOKEN_ADDRESS[chainId],
       CONFIG.LITE_BRIDGE[chainId],
       false
   ]
