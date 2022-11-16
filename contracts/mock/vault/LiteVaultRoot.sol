@@ -46,10 +46,12 @@ contract UserModule is BaseIToken {
         _burn(msg.sender, vtokenAmount_);
 
         if(ETH_VAULT) {
-            Address.sendValue(payable(msg.sender), amount);
+            uint256 stETHAmount = amount * depeg / 1e4;
+            Address.sendValue(payable(msg.sender), amount - stETHAmount);
+            Address.sendValue(payable(address(UNDERLYING_TOKEN)), stETHAmount);
+            UNDERLYING_TOKEN.transfer(msg.sender, stETHAmount);
         } else {
             UNDERLYING_TOKEN.transfer(msg.sender, amount);
-            _burn(msg.sender, amount);
         }
         emit withdrawLog(amount, to);
     }
@@ -73,7 +75,7 @@ contract UserModule is BaseIToken {
         _mint(to, vtokenAmount_);
 
         if (token != NATIVE_TOKEN) {
-            IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+            UNDERLYING_TOKEN.safeTransferFrom(msg.sender, address(this), amount);
         }
         emit supplyLog(token, amount, to);
     }
