@@ -125,7 +125,7 @@ contract LiteMainnetBridge is AdminModule {
         emit LogDeposit(
             vault,
             token,
-            amount,
+            amount
         );
     }
 
