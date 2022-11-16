@@ -138,13 +138,15 @@ contract LiteMainnetBridge is AdminModule {
 
     function updateExchangeRate(
         address[] memory rootVaults,
-        address[] memory rootToChainVaults
+        address[] memory childVaults
     ) external /* onlyRebalancer */ {
         uint256 length_ = rootVaults.length;
-        ExchangePriceData[] memory exchangePrices_ = new ExchangePriceData[](length_);
         for(uint256 i = 0; i < length_; i++) {
             address rootVault_ = rootVaults[i];
+            address childVault_ = childVaults[i];
             ExchangePriceData memory exchangePriceData;
+
+            require(rootToChainVault[rootVault_] == childVault_, "LBM:[updateExchangeRate]:: root to child are not same");
 
                                                         // mock 
                                                         IiTokenVault(rootVault_).updateExchangePrice();
@@ -152,8 +154,7 @@ contract LiteMainnetBridge is AdminModule {
 
             (exchangePriceData.exchangePrice, ) = IiTokenVault(rootVault_).getCurrentExchangePrice();
             exchangePriceData.rootVault = rootVault_;
-            // exchangePriceData.childVault = rootToChainVault[rootVault_]; // TODO: mock
-            exchangePriceData.childVault = rootToChainVaults[i];
+            exchangePriceData.childVault = childVault_;
             _sendMessageToChild(
                 abi.encode(
                     UPDATE_EXCHANGE_PRICE_SINGLE,
@@ -164,7 +165,7 @@ contract LiteMainnetBridge is AdminModule {
             emit LogUpdateExchangePrice(
                 bridgeNonce,
                 rootVault_,
-                rootToChainVaults[i],
+                childVault_,
                 exchangePriceData.exchangePrice
             );
         }
