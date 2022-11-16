@@ -189,8 +189,12 @@ contract LiteMainnetBridge is AdminModule {
         uint256 length_ = rootVaults.length;
         for(uint256 i = 0; i < length_; i++) {
             address rootVault_ = rootVaults[i];
+            address childVault_ = childVaults[i];
             address token_ = tokens[i];
             uint256 amount_ = amounts[i];
+
+            require(rootToChainVault[rootVault_] == childVault_, "LBM:[withdraw]:: root to child are not same");
+
             IiTokenVault(rootVault_).withdraw(amount_, address(this));
             if(token_ == NATIVE_TOKEN) {
                 uint256 stETHBalance_ = stETH.balanceOf(address(this));
@@ -198,9 +202,9 @@ contract LiteMainnetBridge is AdminModule {
                 if (stETHBalance_ > 0) {
                     // TODO: swap and depeg logics
                     stETH.safeApprove(oneInchAddress, stETHBalance_);
-                    Address.functionCall(oneInchAddress, abi.encodeWithSignature("swap(uint256,address)", stETHBalance_, rootVault_), "steth-1inch-swap-failed"); // MOCK
-                    // Address.functionCall(oneInchAddress, oneInchSwapCalldata, "steth-1inch-swap-failed");
-                    
+
+                    Address.functionCall(oneInchAddress, abi.encodeWithSignature("swap(uint256,address)", stETHBalance_, rootVault_), "LBM:[withdraw]:: steth-1inch-swap-failed"); // MOCK
+                    // Address.functionCall(oneInchAddress, oneInchSwapCalldata, "LBM:[withdraw]:: steth-1inch-swap-failed");
 
                     uint256 ethBalanceAfterSwap_ = address(this).balance;
                     uint256 ethAmountFromSwap_ = ethBalanceAfterSwap_ - ethBalance_;
