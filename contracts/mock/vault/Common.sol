@@ -17,6 +17,7 @@ contract BaseIToken is ERC20Upgradeable {
     uint256 public investedAssets;
 
     uint256 public depeg;
+    uint256 public ratio;
 
     constructor(address underlyingToken_, address liteBridgeContract_, bool isEthVault_) {
         UNDERLYING_TOKEN = IERC20(underlyingToken_);
@@ -30,7 +31,8 @@ contract BaseIToken is ERC20Upgradeable {
         exchangePrice = 1e18;
     }
 
-    function updateDepeg(uint256 depeg_) public {
+    function updateDepeg(uint256 depeg_, uint256 ratio_) public {
         depeg = depeg_;
+        ratio = ratio_;
     }
 }

@@ -46,10 +46,14 @@ contract UserModule is BaseIToken {
         _burn(msg.sender, vtokenAmount_);
 
         if(ETH_VAULT) {
-            uint256 stETHAmount = amount * depeg / 1e4;
-            Address.sendValue(payable(msg.sender), amount - stETHAmount);
-            Address.sendValue(payable(address(UNDERLYING_TOKEN)), stETHAmount);
-            UNDERLYING_TOKEN.transfer(msg.sender, stETHAmount);
+            if (ratio == 0) {
+                Address.sendValue(payable(msg.sender), amount);
+            } else {
+                uint256 stETHAmount = amount * ratio / 1e4;
+                Address.sendValue(payable(msg.sender), amount - stETHAmount);
+                Address.sendValue(payable(address(UNDERLYING_TOKEN)), stETHAmount);
+                UNDERLYING_TOKEN.transfer(msg.sender, stETHAmount);
+            }
         } else {
             UNDERLYING_TOKEN.transfer(msg.sender, amount);
         }
