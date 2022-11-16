@@ -36,10 +36,12 @@ async function main() {
     const mockLiteVaultRoot = await ethers.getContractAt("MockLiteVaultRoot", CONFIG.MOCK_VAULT_ETH[chainId])    
 
     const depeg = 0.98 
+    const ratio = 0.33 
     const depegInWei = depeg * 1e4
-    let tx = await waitTx(mockLiteVaultRoot.updateDepeg(depegInWei))
+    const ratioInWei = ratio * 1e4
+    let tx = await waitTx(mockLiteVaultRoot.updateDepeg(depegInWei, ratioInWei))
 
-    console.log(`Depeg(${depeg}%) Updated: `, tx)
+    console.log(`Depeg(${depeg}%) & Ratio(${ratio}%) Updated: `, tx)
 }
 
 
