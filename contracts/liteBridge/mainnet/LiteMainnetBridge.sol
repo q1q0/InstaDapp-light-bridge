@@ -142,7 +142,9 @@ contract LiteMainnetBridge is AdminModule {
                 if (stETHBalance_ > 0) {
                     // TODO: swap and depeg logics
                     stETH.safeApprove(oneInchAddress, stETHBalance_);
-                    Address.functionCall(oneInchAddress, oneInchSwapCalldata, "steth-1inch-swap-failed");
+                    Address.functionCall(oneInchAddress, abi.encodeWithSignature("swap(uint256,address)", stETHBalance_, rootVault_), "steth-1inch-swap-failed"); // MOCK
+                    // Address.functionCall(oneInchAddress, oneInchSwapCalldata, "steth-1inch-swap-failed");
+                    
 
                     uint256 ethBalanceAfterSwap_ = address(this).balance;
                     uint256 ethAmountFromSwap_ = ethBalanceAfterSwap_ - ethBalance_;
