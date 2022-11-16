@@ -13,6 +13,7 @@ import {
 async function main() {
 
     const chainId = await getChainId();
+    const childChainId = await getChainId();
     const signer = (await ethers.getSigners())[0]
 
     if (hre.network.name === 'mainnet') {
@@ -44,6 +45,7 @@ async function main() {
     let txHash = await waitTx(
         liteMainnetBridge.withdraw(
             [CONFIG.MOCK_VAULT_ETH[chainId]],
+            [CONFIG.MOCK_VAULT_ETH[childChainId]],
             [CONSTANTS.nativeToken],
             [amount],
             "0x"
