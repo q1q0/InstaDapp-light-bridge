@@ -9,18 +9,62 @@ import "./interface/IiToken.sol";
 
 /*
  - Add Ownable logics
- - Add admin functions
- - Add onlyRebalancer modifier
- - Add events
 */
 
 
 contract AdminModule is VariablesV1 {
-    // Add function to add RootToChain Mapping
-    // Add function to add rebalancer Mapping
+    event LogToggleRootToChildVaultMap(
+        address indexed rootVault,
+        address indexed childVault,
+        bool indexed add
+    );
 
-     function setRebalancer(address _account, bool flag) external /* onlyOwner */ {
-        rebalancer[_account] = flag;
+    event LogToggleRebalancer(
+        address indexed rebalancer,
+        bool indexed add
+    );
+
+    modifier onlyRebalancer() {
+        require(rebalancer[msg.sender], "LBM: not a rebalancer");
+        _;
+    }
+
+    function toggleRootToChildVaultMap(
+        address rootVault,
+        address childVault,
+        bool add
+    ) public /* onlyOwner */ {
+        if (add) {
+            require(rootToChainVault[rootVault] == address(0), "LBM:[toggleRootToChainMap]:: Root to Child Mapping already added");
+            rootToChainVault[rootVault] = childVault;
+        } else {
+            require(rootToChainVault[rootVault] != address(0), "LBM:[toggleRootToChainMap]:: Root to Child Mapping not added");
+            delete rootToChainVault[rootVault];
+        }
+
+        emit LogToggleRootToChildVaultMap(
+            rootVault,
+            childVault,
+            add
+        );
+    }
+
+    function toggleRebalancer(
+        address rebalancerAddress,
+        bool add
+    ) public /* onlyOwner */ {
+        if (add) {
+            require(!rebalancer[rebalancerAddress], "LBM:[toggleRebalancer]:: rebalancerAddress already enabled");
+            rebalancer[rebalancerAddress] = add;
+        } else {
+            require(rebalancer[rebalancerAddress], "LBM:[toggleRebalancer]::rebalancerAddress not enabled");
+            rebalancer[rebalancerAddress] = add;
+        }
+
+        emit LogToggleRebalancer(
+            rebalancerAddress,
+            add
+        );
     }
 
     constructor(
@@ -44,6 +88,13 @@ contract LiteMainnetBridge is AdminModule {
     function _sendMessageToChild(bytes memory message) internal {
         fxRoot.sendMessageToChild(address(this), message);
     }
+
+    event LogDeposit(
+        address indexed vault,
+        address indexed token,
+        uint256 amount
+    );
+
 
     function deposit( // rename function
         bytes memory inputData,
@@ -71,7 +122,11 @@ contract LiteMainnetBridge is AdminModule {
 
         // optional - send exchangeRate to polygon of the vault
 
-        // emit event
+        emit LogDeposit(
+            vault,
+            token,
+            amount,
+        );
     }
 
     event LogUpdateExchangePrice(
@@ -90,9 +145,11 @@ contract LiteMainnetBridge is AdminModule {
         for(uint256 i = 0; i < length_; i++) {
             address rootVault_ = rootVaults[i];
             ExchangePriceData memory exchangePriceData;
-            // mock 
-            IiTokenVault(rootVault_).updateExchangePrice();
-            // mock
+
+                                                        // mock 
+                                                        IiTokenVault(rootVault_).updateExchangePrice();
+                                                        // mock
+
             (exchangePriceData.exchangePrice, ) = IiTokenVault(rootVault_).getCurrentExchangePrice();
             exchangePriceData.rootVault = rootVault_;
             // exchangePriceData.childVault = rootToChainVault[rootVault_]; // TODO: mock
@@ -111,8 +168,6 @@ contract LiteMainnetBridge is AdminModule {
                 exchangePriceData.exchangePrice
             );
         }
-
-        // emit event
     }
 
     event LogWithdrawToPolygon(
