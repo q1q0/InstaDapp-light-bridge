@@ -31,6 +31,11 @@ const getChildChainId = async (): Promise<string> => {
     return rootToChainChainId[rootChainId];
 }
 
+const getRootChainId = async (): Promise<string> => {
+    const childChainId = (hre.network.config.chainId || (await ethers.provider.getNetwork()).chainId).toString()
+    return Object.keys(rootToChainChainId).find(a => rootToChainChainId[a] === childChainId) || "137";
+}
+
 const waitTx = async (contractCall: Promise<ContractTransaction>, blockConfirmation?: number, log: boolean = false): Promise<string> =>{
     const tx = await contractCall
     await tx.wait(blockConfirmation)
@@ -52,6 +57,7 @@ export {
     deployContract,
     getChainId,
     getChildChainId,
+    getRootChainId,
     waitTx,
     getMode,
     Mode,
