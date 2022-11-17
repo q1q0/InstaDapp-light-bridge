@@ -44,7 +44,7 @@ async function main() {
 
     const liteMainnetBridgeInitialiseCalldata = (await liteMainnetBridge.populateTransaction.initialize(CONFIG.OWNER[chainId])).data || "0x"
     if (liteMainnetBridgeInitialiseCalldata == "0x") throw Error("liteMainnetBridgeInitialiseCalldata is 0x")
-    let txHash = await waitTx(liteProxyAdmin.upgradeAndCall(CONFIG.LITE_BRIDGE[chainId], liteMainnetBridge.address, liteMainnetBridgeInitialiseCalldata))
+    let txHash = await waitTx(liteProxyAdmin.upgradeAndCall(CONFIG.LITE_BRIDGE[chainId], liteMainnetBridge.address, liteMainnetBridgeInitialiseCalldata), 4)
     console.log("Update Implementation of liteMainnetBridge: ", txHash)
 
     if (hre.network.name !== 'hardhat') {
@@ -68,7 +68,7 @@ async function main() {
     const litePolygonBridge = await deployContract('LitePolygonBridge', Object.values(CONFIG.LITE_BRIDGE_CONSTUCTOR_ARGS[chainId]))
     const litePolygonBridgeInitialiseCalldata = (await litePolygonBridge.populateTransaction.initialize(CONFIG.OWNER[chainId])).data || "0x"
     if (litePolygonBridgeInitialiseCalldata == "0x") throw Error("litePolygonBridgeInitialiseCalldata is 0x")
-    let txHash = await waitTx(liteProxyAdmin.upgradeAndCall(CONFIG.LITE_BRIDGE[chainId], litePolygonBridge.address, litePolygonBridgeInitialiseCalldata))
+    let txHash = await waitTx(liteProxyAdmin.upgradeAndCall(CONFIG.LITE_BRIDGE[chainId], litePolygonBridge.address, litePolygonBridgeInitialiseCalldata), 4)
     console.log("Update Implementation of litePolygonBridge: ", txHash)
 
     if (hre.network.name !== 'hardhat') {
