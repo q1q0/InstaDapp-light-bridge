@@ -186,10 +186,6 @@ contract LitePolygonBridge is AdminModule {
             revert("LBP:[processWithdrawFromMainnet]:: not update exchange price key");
         }
         bridgeNonceToData[bridgeNonce].isExecuted = 1;
-
-
-
-        
     }
 
     function processBatchWithdrawFromMainnet(
@@ -207,12 +203,10 @@ contract LitePolygonBridge is AdminModule {
         address token,
         uint256 amount
     ) public OnlyRebalancer {
-        // Add balance condition
 
         IChildVault(vault).toMainnet(amount);
         IChildChainManager(token).withdraw(amount);
 
-        // Emit event
         emit LogToMainnet(
             vault,
             vault,
