@@ -38,43 +38,16 @@ async function main() {
 
     const liteProxyAdmin = await ethers.getContractAt("LiteProxyAdmin", CONFIG.PROXY_ADMIN[chainId])
 
-    // mock contracts
-    const mockLiteVaultRootArgs = [
-      CONFIG.WETH_ADDRESS[chainId],
-      CONFIG.LITE_BRIDGE[chainId],
-      true
-    ]
-    const mockLiteVaultRoot = await deployContract('MockLiteVaultRoot', mockLiteVaultRootArgs)
-    const mockLiteVaultRootInitialiseCalldata = (await mockLiteVaultRoot.populateTransaction.initialize("ZzZzZ ETH", "zETH")).data
-    const mockProxy = await deployContract('MockProxy', [mockLiteVaultRoot.address, liteProxyAdmin.address, mockLiteVaultRootInitialiseCalldata])
-
     // Bridge Contracts
     const liteMainnetBridge = await deployContract('LiteMainnetBridge', Object.values(CONFIG.LITE_BRIDGE_CONSTUCTOR_ARGS[chainId]))
     const liteMainnetBridgeProxy = await ethers.getContractAt("LiteMainnetBridge", CONFIG.LITE_BRIDGE[chainId])
 
-    let txHash = await waitTx(liteProxyAdmin.upgrade(CONFIG.LITE_BRIDGE[chainId], liteMainnetBridge.address))
+    const liteMainnetBridgeInitialiseCalldata = (await liteMainnetBridge.populateTransaction.initialize(CONFIG.OWNER[chainId])).data || "0x"
+    if (liteMainnetBridgeInitialiseCalldata == "0x") throw Error("liteMainnetBridgeInitialiseCalldata is 0x")
+    let txHash = await waitTx(liteProxyAdmin.upgradeAndCall(CONFIG.LITE_BRIDGE[chainId], liteMainnetBridge.address, liteMainnetBridgeInitialiseCalldata))
     console.log("Update Implementation of liteMainnetBridge: ", txHash)
 
     if (hre.network.name !== 'hardhat') {
-      try {
-        await hre.run('verify:verify', {
-            address: mockLiteVaultRoot.address,
-            contract: "contracts/mock/vault/LiteVaultRoot.sol:MockLiteVaultRoot",
-            constructorArguments: mockLiteVaultRootArgs
-        })
-      } catch (error) {
-        console.log(error)
-      }
-
-      try {
-        await hre.run('verify:verify', {
-            address: mockProxy.address,
-            contract: "contracts/mock/proxy.sol:MockProxy",
-            constructorArguments: [mockLiteVaultRoot.address, liteProxyAdmin.address, mockLiteVaultRootInitialiseCalldata]
-        })
-      } catch (error) {
-        console.log(error)
-      }
 
       try {
         await hre.run('verify:verify', {
@@ -91,44 +64,14 @@ async function main() {
   } else {
     const liteProxyAdmin = await ethers.getContractAt("LiteProxyAdmin", CONFIG.PROXY_ADMIN[chainId])
 
-    // mock contracts
-    const mockLiteVaultChildArgs = [
-      CONFIG.WETH_ADDRESS[chainId],
-      CONFIG.LITE_BRIDGE[chainId],
-      true
-    ]
-    const mockLiteVaultChild = await deployContract('MockLiteVaultChild', mockLiteVaultChildArgs)
-    const mockLiteVaultChildInitialiseCalldata = (await mockLiteVaultChild.populateTransaction.initialize("ZzZzZ PolETH", "zPolETH")).data
-    const mockProxy = await deployContract('MockProxy', [mockLiteVaultChild.address, liteProxyAdmin.address, mockLiteVaultChildInitialiseCalldata])
-
-
     // Bridge Contracts
     const litePolygonBridge = await deployContract('LitePolygonBridge', Object.values(CONFIG.LITE_BRIDGE_CONSTUCTOR_ARGS[chainId]))
-
-    let txHash = await waitTx(liteProxyAdmin.upgrade(CONFIG.LITE_BRIDGE[chainId], litePolygonBridge.address))
+    const litePolygonBridgeInitialiseCalldata = (await litePolygonBridge.populateTransaction.initialize(CONFIG.OWNER[chainId])).data || "0x"
+    if (litePolygonBridgeInitialiseCalldata == "0x") throw Error("litePolygonBridgeInitialiseCalldata is 0x")
+    let txHash = await waitTx(liteProxyAdmin.upgradeAndCall(CONFIG.LITE_BRIDGE[chainId], litePolygonBridge.address, litePolygonBridgeInitialiseCalldata))
     console.log("Update Implementation of litePolygonBridge: ", txHash)
 
     if (hre.network.name !== 'hardhat') {
-      try {
-        await hre.run('verify:verify', {
-            address: mockLiteVaultChild.address,
-            contract: "contracts/mock/vault/LiteVaultChild.sol:MockLiteVaultChild",
-            constructorArguments: mockLiteVaultChildArgs
-        })
-      } catch (error) {
-        console.log(error)
-      }
-
-      try {
-        await hre.run('verify:verify', {
-            address: mockProxy.address,
-            contract: "contracts/mock/proxy.sol:MockProxy",
-            constructorArguments: [mockLiteVaultChild.address, liteProxyAdmin.address, mockLiteVaultChildInitialiseCalldata]
-        })
-      } catch (error) {
-        console.log(error)
-      }
-
       try {
         await hre.run('verify:verify', {
             address: litePolygonBridge.address,
