@@ -34,18 +34,31 @@ async function main() {
       )
   }
 
+  const isETH = false
+
   if ((await getMode()) == Mode.ROOT) {
 
     const liteProxyAdmin = await ethers.getContractAt("LiteProxyAdmin", CONFIG.PROXY_ADMIN[chainId])
 
     // mock contracts
-    const mockLiteVaultRootArgs = [
-      CONFIG.TOKEN_ADDRESS[chainId],
+    const mockLiteVaultRootArgsEth = [
+      CONFIG.STETH_ADDRESS[chainId],
       CONFIG.LITE_BRIDGE[chainId],
       true
     ]
+
+    // mock contracts
+    const mockLiteVaultRootArgsToken = [
+      CONFIG.TOKEN_ADDRESS[chainId],
+      CONFIG.LITE_BRIDGE[chainId],
+      false
+    ]
+
+    const mockLiteVaultRootArgs = isETH ? mockLiteVaultRootArgsEth : mockLiteVaultRootArgsToken;
+    const tokenDetails = isETH ? ["ZzZzZ ETH", "zETH"] : ["ZzZzZ Token", "zTKN"]
+
     const mockLiteVaultRoot = await deployContract('MockLiteVaultRoot', mockLiteVaultRootArgs)
-    const mockLiteVaultRootInitialiseCalldata = (await mockLiteVaultRoot.populateTransaction.initialize("ZzZzZ ETH", "zETH")).data
+    const mockLiteVaultRootInitialiseCalldata = (await mockLiteVaultRoot.populateTransaction.initialize(...tokenDetails)).data
     const mockProxy = await deployContract('MockProxy', [mockLiteVaultRoot.address, liteProxyAdmin.address, mockLiteVaultRootInitialiseCalldata], [], 4)
 
     if (hre.network.name !== 'hardhat') {
@@ -73,15 +86,27 @@ async function main() {
     }
   } else {
     const liteProxyAdmin = await ethers.getContractAt("LiteProxyAdmin", CONFIG.PROXY_ADMIN[chainId])
-
+    
+    
     // mock contracts
-    const mockLiteVaultChildArgs = [
+    const mockLiteVaultChildArgsEth = [
       CONFIG.TOKEN_ADDRESS[chainId],
       CONFIG.LITE_BRIDGE[chainId],
       true
     ]
+
+    // mock contracts
+    const mockLiteVaultChildArgsToken = [
+      CONFIG.TOKEN_ADDRESS[chainId],
+      CONFIG.LITE_BRIDGE[chainId],
+      true
+    ]
+
+    const mockLiteVaultChildArgs = isETH ? mockLiteVaultChildArgsEth : mockLiteVaultChildArgsToken;
+    const tokenDetails = isETH ? ["ZzZzZ PolETH", "zPolETH"] : ["ZzZzZ PolToken", "zPolTKN"]
+
     const mockLiteVaultChild = await deployContract('MockLiteVaultChild', mockLiteVaultChildArgs)
-    const mockLiteVaultChildInitialiseCalldata = (await mockLiteVaultChild.populateTransaction.initialize("ZzZzZ PolETH", "zPolETH")).data
+    const mockLiteVaultChildInitialiseCalldata = (await mockLiteVaultChild.populateTransaction.initialize(...tokenDetails)).data
     const mockProxy = await deployContract('MockProxy', [mockLiteVaultChild.address, liteProxyAdmin.address, mockLiteVaultChildInitialiseCalldata], [], 12)
 
     if (hre.network.name !== 'hardhat') {
