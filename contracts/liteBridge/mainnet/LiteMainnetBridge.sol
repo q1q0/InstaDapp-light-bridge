@@ -28,7 +28,7 @@ contract AdminModule is VariablesV1, Events {
         address rootVault,
         address childVault,
         bool add
-    ) public /* onlyOwner */ {
+    ) public onlyOwner {
         if (add) {
             require(rootToChainVault[rootVault] == address(0), "LBM:[toggleRootToChainMap]:: Root to Child Mapping already added");
             rootToChainVault[rootVault] = childVault;
@@ -47,7 +47,7 @@ contract AdminModule is VariablesV1, Events {
     function toggleRebalancer(
         address rebalancerAddress,
         bool add
-    ) public /* onlyOwner */ {
+    ) public onlyOwner {
         if (add) {
             require(!rebalancer[rebalancerAddress], "LBM:[toggleRebalancer]:: rebalancerAddress already enabled");
             rebalancer[rebalancerAddress] = add;
@@ -84,22 +84,22 @@ contract LiteMainnetBridge is AdminModule {
         fxRoot.sendMessageToChild(address(this), message);
     }
 
-    function depositToVaultFromPolygon(
+    function processFromPolygon(
         bytes memory polygonExitData,
         address vault,
         address token,
         uint256 amount
-    ) external /* onlyRebalancer */ {
+    ) external onlyRebalancer {
         rootChainManager.exit(polygonExitData);
-        emit LogFromPolygon(token, amount); // TODO later: use RLP decoding to find out the token and amount from input data
         depositToVault(vault, token, amount);
+        emit LogFromPolygon(vault, token, amount); // TODO later: use RLP decoding to find out the token and amount from input data
     }
 
     function depositToVault(
         address vault,
         address token,
         uint256 amount
-    ) public /* onlyRebalancer */ {
+    ) public onlyRebalancer {
         uint256 iTokenAmount_;
         if (token == NATIVE_TOKEN) {
             iTokenAmount_ = IiTokenVault(vault).supplyEth{value: amount}(address(this));
@@ -137,6 +137,7 @@ contract LiteMainnetBridge is AdminModule {
                 abi.encode(exchangePriceData)
             )
         );
+
         emit LogUpdateExchangePrice(
             bridgeNonce,
             rootVault,
@@ -173,7 +174,9 @@ contract LiteMainnetBridge is AdminModule {
             if (stETHBalance_ > 0) {
                 stETH.safeApprove(oneInchAddress, stETHBalance_);
 
-                // Address.functionCall(oneInchAddress, abi.encodeWithSignature("swap(uint256,address)", stETHBalance_, rootVault), "LBM:[withdraw]:: steth-1inch-swap-failed"); // MOCK
+                // MOCK MOCK MOCK MOCK MOCK
+                // Address.functionCall(oneInchAddress, abi.encodeWithSignature("swap(uint256,address)", stETHBalance_, rootVault), "LBM:[withdraw]:: steth-1inch-swap-failed");
+                // MOCK MOCK MOCK MOCK MOCK
                 
                 Address.functionCall(oneInchAddress, oneInchSwapCalldata, "LBM:[withdraw]:: steth-1inch-swap-failed");
 
@@ -183,7 +186,7 @@ contract LiteMainnetBridge is AdminModule {
 
                 uint256 depegPercentage_ = ethAmountFromSwap_ * 1e4 / stETHBalance_;
 
-                require(depegPercentage_ >= 0.90 * 1e4, "steth-high-depeg"); // 10% depeg  // TODO: add better logics later
+                require(depegPercentage_ >= 0.95 * 1e4, "steth-high-depeg"); // 5% depeg  // TODO: add better logics later
             }
             amount_ = ethBalance_;
 

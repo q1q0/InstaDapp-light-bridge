@@ -20,6 +20,7 @@ contract Events {
     );
 
     event LogFromPolygon(
+        address indexed vault,
         address indexed token,
         uint256 amount
     );

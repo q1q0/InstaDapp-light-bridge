@@ -32,7 +32,7 @@ contract Events {
         bytes32 indexed key
     );
 
-    event LogToMainnet(
+    event LogDepositToMainnet(
         address indexed rootVault,
         address indexed childVault,
         address indexed token,
