@@ -141,38 +141,49 @@ contract LiteMainnetBridge is AdminModule {
         uint256 exchangePrice
     );
 
-    function updateExchangeRate(
-        address[] memory rootVaults,
-        address[] memory childVaults
-    ) external /* onlyRebalancer */ {
-        uint256 length_ = rootVaults.length;
+    function updateExchangePrice(
+        address rootVault,
+        address childVault
+    ) public onlyRebalancer {
+        ExchangePriceData memory exchangePriceData;
+
+        require(rootToChainVault[rootVault] == childVault, "LBM:[updateExchangeRate]:: root to child are not same");
+
+                                                    // mock 
+                                                    IiTokenVault(rootVault).updateExchangePrice();
+                                                    // mock
+
+        (exchangePriceData.exchangePrice, ) = IiTokenVault(rootVault).getCurrentExchangePrice();
+        exchangePriceData.rootVault = rootVault;
+        exchangePriceData.childVault = childVault;
+        _sendMessageToChild(
+            abi.encode(
+                UPDATE_EXCHANGE_PRICE_SINGLE,
+                ++bridgeNonce,
+                abi.encode(exchangePriceData)
+            )
+        );
+        emit LogUpdateExchangePrice(
+            bridgeNonce,
+            rootVault,
+            childVault,
+            exchangePriceData.exchangePrice
+        );
+    }
+
+    struct UpdateExchangePriceParams {
+        address rootVault;
+        address childVault;
+    }
+
+    // @notice onlyRebalancer - is ran inside withdrawToPolygon function
+    function updateExchangePrice(
+        UpdateExchangePriceParams[] memory updateExchangePriceParams
+    ) external {
+        uint256 length_ = updateExchangePriceParams.length;
         for(uint256 i = 0; i < length_; i++) {
-            address rootVault_ = rootVaults[i];
-            address childVault_ = childVaults[i];
-            ExchangePriceData memory exchangePriceData;
-
-            require(rootToChainVault[rootVault_] == childVault_, "LBM:[updateExchangeRate]:: root to child are not same");
-
-                                                        // mock 
-                                                        IiTokenVault(rootVault_).updateExchangePrice();
-                                                        // mock
-
-            (exchangePriceData.exchangePrice, ) = IiTokenVault(rootVault_).getCurrentExchangePrice();
-            exchangePriceData.rootVault = rootVault_;
-            exchangePriceData.childVault = childVault_;
-            _sendMessageToChild(
-                abi.encode(
-                    UPDATE_EXCHANGE_PRICE_SINGLE,
-                    ++bridgeNonce,
-                    abi.encode(exchangePriceData)
-                )
-            );
-            emit LogUpdateExchangePrice(
-                bridgeNonce,
-                rootVault_,
-                childVault_,
-                exchangePriceData.exchangePrice
-            );
+            UpdateExchangePriceParams memory updateExchangePriceParams_ = updateExchangePriceParams[i];
+            updateExchangePrice(updateExchangePriceParams_.rootVault, updateExchangePriceParams_.childVault);
         }
     }
 
@@ -190,7 +201,7 @@ contract LiteMainnetBridge is AdminModule {
         address token, 
         uint256 amount,
         bytes memory oneInchSwapCalldata
-    ) public returns(uint256 iTokenAmount) {
+    ) public onlyRebalancer returns(uint256 iTokenAmount) {
         require(rootToChainVault[rootVault] == childVault, "LBM:[withdraw]:: root to child are not same");
 
         iTokenAmount = IiTokenVault(rootVault).withdraw(amount, address(this));
@@ -244,6 +255,7 @@ contract LiteMainnetBridge is AdminModule {
         );
     }  
 
+    // @notice onlyRebalancer - is ran inside withdrawToPolygon function
     function batchWithdrawToPolygon(BatchWithdrawParams[] memory batchWithdrawParams) external returns(uint256[] memory iTokenAmounts) {
         uint256 length_ = batchWithdrawParams.length;
         iTokenAmounts = new uint256[](length_);
