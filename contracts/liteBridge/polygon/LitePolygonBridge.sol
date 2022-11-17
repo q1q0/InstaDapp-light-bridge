@@ -67,6 +67,8 @@ abstract contract AdminModule is FxBaseChildTunnel {
         toggleRebalancer(newOwner, true);
     }
 
+    function renounceOwnership() public override virtual onlyOwner {}
+
     modifier OnlyRebalancer() {
         require(rebalancer[msg.sender], "LBP: not a rebalancer");
         _;

@@ -22,6 +22,8 @@ contract AdminModule is VariablesV1, Events {
         toggleRebalancer(newOwner, true);
     }
 
+    function renounceOwnership() public override virtual onlyOwner {}
+
     function toggleRootToChildVaultMap(
         address rootVault,
         address childVault,
