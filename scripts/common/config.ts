@@ -8,8 +8,8 @@ const MOCK_DEX: Record<string, string> = {
 
 const CONFIG: Record<string, Record<string, string | any>> =  {
     "LITE_BRIDGE": {
-        "80001": "0x818c4144dC4b6aa66422C7DCf5977B75EcE834eB",
-        "5": "0x818c4144dC4b6aa66422C7DCf5977B75EcE834eB",
+        "80001": "0xdd6701bB025a5f738897670Ce01eA30F980EF2A2",
+        "5": "0xdd6701bB025a5f738897670Ce01eA30F980EF2A2",
         "137": "0xE9C50782d354b1f83c7c56c50C5230873B608F0F",
         "1": "0xE9C50782d354b1f83c7c56c50C5230873B608F0F"
     },
@@ -47,6 +47,12 @@ const CONFIG: Record<string, Record<string, string | any>> =  {
     "PROXY_ADMIN": {
         "80001": "0xeAE2289A1040Ae322466c346a73A0a81366FfBC3",
         "5": "0xeAE2289A1040Ae322466c346a73A0a81366FfBC3",
+        "137": "",
+        "1": ""
+    },
+    "OWNER": {
+        "80001": "0xbEc0b65E5EC78cA9359Cd3f65F7fA3a33c8bFC40",
+        "5": "0xbEc0b65E5EC78cA9359Cd3f65F7fA3a33c8bFC40",
         "137": "",
         "1": ""
     },
