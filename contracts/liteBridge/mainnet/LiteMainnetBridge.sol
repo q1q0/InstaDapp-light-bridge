@@ -4,22 +4,13 @@ pragma solidity ^0.8.17;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "./Variables.sol";
 import "./interface/IiToken.sol";
 
+import "./Variables.sol";
+import "./Events.sol";
 
-contract AdminModule is VariablesV1 {
-    event LogToggleRootToChildVaultMap(
-        address indexed rootVault,
-        address indexed childVault,
-        bool indexed add
-    );
 
-    event LogToggleRebalancer(
-        address indexed rebalancer,
-        bool indexed add
-    );
-
+contract AdminModule is VariablesV1, Events {
     modifier onlyRebalancer() {
         require(rebalancer[msg.sender], "LBM: not a rebalancer");
         _;
@@ -91,18 +82,6 @@ contract LiteMainnetBridge is AdminModule {
         fxRoot.sendMessageToChild(address(this), message);
     }
 
-    event LogDepositToVault(
-        address indexed vault,
-        address indexed token,
-        uint256 amount
-    );
-
-    event LogFromPolygon(
-        address indexed token,
-        uint256 amount
-    );
-
-
     function depositToVaultFromPolygon(
         bytes memory polygonExitData,
         address vault,
@@ -133,13 +112,6 @@ contract LiteMainnetBridge is AdminModule {
             amount
         );
     }
-
-    event LogUpdateExchangePrice(
-        uint256 indexed bridgeNonce,
-        address indexed rootVault,
-        address indexed childVault,
-        uint256 exchangePrice
-    );
 
     function updateExchangePrice(
         address rootVault,
@@ -181,14 +153,6 @@ contract LiteMainnetBridge is AdminModule {
             updateExchangePrice(updateExchangePriceParams_.rootVault, updateExchangePriceParams_.childVault);
         }
     }
-
-    event LogWithdrawToPolygon(
-        uint256 indexed bridgeNonce,
-        address indexed rootVault,
-        address indexed childVault,
-        address token,
-        uint256 amount
-    );
 
     function withdrawToPolygon(
         address rootVault,
