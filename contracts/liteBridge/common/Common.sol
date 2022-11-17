@@ -11,9 +11,30 @@ contract Structs {
     }
 
     struct WithdrawData {
-       address rootVault;
-       address childVault;
-       uint256 amount;
+        address rootVault;
+        address childVault;
+        address rootToken;
+        address childToken;
+        uint256 amount;
+    }
+
+    struct StateData {
+        uint8 isExecuted;
+        bytes32 key;
+        bytes data;
+    }
+
+    struct BatchWithdrawParams {
+        address rootVault;
+        address childVault;
+        address token;
+        uint256 amount;
+        bytes oneInchSwapCalldata;
+    }
+
+    struct UpdateExchangePriceParams {
+        address rootVault;
+        address childVault;
     }
 }
 

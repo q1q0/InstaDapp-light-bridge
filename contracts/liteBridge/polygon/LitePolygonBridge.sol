@@ -9,8 +9,9 @@ import "./interface/IChildVault.sol";
 import "./interface/IiTokenPolygon.sol";
 
 import "./Variables.sol";
+import "./Events.sol";
 
-abstract contract FxBaseChildTunnel is VariablesV1 {
+abstract contract FxBaseChildTunnel is VariablesV1, Events {
     // MessageTunnel on L1 will get data from this event
     event MessageSent(bytes message);
 
@@ -60,27 +61,30 @@ abstract contract FxBaseChildTunnel is VariablesV1 {
 }
 
 abstract contract AdminModule is FxBaseChildTunnel {
-    event LogToggleChildToRootVaultMap(
-        address indexed rootVault,
-        address indexed childVault,
-        bool indexed add
-    );
+    function transferOwnership(address newOwner) public override virtual onlyOwner {
+        toggleRebalancer(owner(), false);
+        super.transferOwnership(newOwner);
+        toggleRebalancer(newOwner, true);
+    }
 
-    event LogToggleRebalancer(
-        address indexed rebalancer,
-        bool indexed add
-    );
+    function renounceOwnership() public override virtual onlyOwner {}
 
     modifier onlyRebalancer() {
         require(rebalancer[msg.sender], "LBP: not a rebalancer");
         _;
     }
 
+    modifier isBridgeNonceExecuted(uint256 bridgeNonce) {
+        require(bridgeNonceToData[bridgeNonce].isExecuted == 0, "LBP:[isBridgeNonceExecuted]:: already executed");
+        _;
+        bridgeNonceToData[bridgeNonce].isExecuted = 1;
+    }
+
     function toggleChildToRootVaultMap(
         address rootVault,
         address childVault,
         bool add
-    ) public /* onlyOwner */ {
+    ) public onlyOwner {
         if (add) {
             require(childToRootVault[rootVault] == address(0), "LBP:[toggleChildToRootVaultMap]:: child to root Mapping already added");
             childToRootVault[rootVault] = childVault;
@@ -120,20 +124,6 @@ abstract contract AdminModule is FxBaseChildTunnel {
 contract LitePolygonBridge is AdminModule {
     using SafeERC20 for IERC20;
 
-    receive() external payable {}
-
-    event LogUpdatedExchangePrice(
-        uint256 indexed id,
-        address indexed vault,
-        uint256 exchangePrice
-    );
-
-    event LogMessageReceived (
-        uint256 indexed stateId,
-        uint256 indexed bridgeNonce,
-        bytes32 indexed key
-    );
-
     function _processMessageFromRoot(
         uint256 stateId,
         address sender,
@@ -149,97 +139,87 @@ contract LitePolygonBridge is AdminModule {
         );
     }
 
-    function processUpdateExchangePrice(uint256[] memory bridgeNonces) public {
-        for (uint256 i = 0; i < bridgeNonces.length; i++) {
-            StateData memory stateData_ = bridgeNonceToData[bridgeNonces[i]];
+    function processUpdateExchangePrice(
+        uint256 bridgeNonce
+    ) public onlyRebalancer isBridgeNonceExecuted(bridgeNonce) {
+        StateData memory stateData_ = bridgeNonceToData[bridgeNonce];
 
-            require(stateData_.isExecuted == 0, "LBP:[processUpdateExchangePrice]:: already executed");
-
-            if(stateData_.key == UPDATE_EXCHANGE_PRICE_SINGLE) {
-                ExchangePriceData memory exchangePriceData_ = abi.decode(stateData_.data, (ExchangePriceData));
-                IiTokenVaultPolygon(exchangePriceData_.childVault).updateExchangePrice(exchangePriceData_.exchangePrice);
-                emit LogUpdatedExchangePrice(bridgeNonces[i], exchangePriceData_.childVault, exchangePriceData_.exchangePrice);
-            } else if (stateData_.key == UPDATE_EXCHANGE_PRICE_MULTI) { //
-                ExchangePriceData[] memory exchangePriceDatas_ = abi.decode(stateData_.data, (ExchangePriceData[]));
-                uint256 length_ = exchangePriceDatas_.length;
-                for (uint256 j = 0; j < length_; j++) {
-                    // require
-                    IiTokenVaultPolygon(exchangePriceDatas_[j].childVault).updateExchangePrice(exchangePriceDatas_[j].exchangePrice);
-                    emit LogUpdatedExchangePrice(bridgeNonces[i], exchangePriceDatas_[j].childVault, exchangePriceDatas_[j].exchangePrice);
-                }
-            } else {
-                revert("LBP:[processUpdateExchangePrice]:: not update exchange price key");
-            }
-            bridgeNonceToData[bridgeNonces[i]].isExecuted = 1;
+        if(stateData_.key == UPDATE_EXCHANGE_PRICE_SINGLE) {
+            ExchangePriceData memory exchangePriceData_ = abi.decode(stateData_.data, (ExchangePriceData));
+            IiTokenVaultPolygon(exchangePriceData_.childVault).updateExchangePrice(exchangePriceData_.exchangePrice);
+            emit LogUpdatedExchangePrice(bridgeNonce, exchangePriceData_.childVault, exchangePriceData_.exchangePrice);
+        } else if (stateData_.key == UPDATE_EXCHANGE_PRICE_MULTI) {  // TODO implement later
+            revert("LBP:[processUpdateExchangePrice]:: UPDATE_EXCHANGE_PRICE_MULTI not implemented yet");
+        } else {
+            revert("LBP:[processUpdateExchangePrice]:: not update exchange price key");
         }
     }
 
-
-    event LogFromMainnet(
-        address indexed rootVault,
-        address indexed childVault,
-        address indexed token,
-        uint256 amont
-    );
-
-    function processFromMainnetSingle(
-        address vault,
-        address token,
-        uint256 amount
-    ) public /* OnlyRebalancer */ {
-        // TODO process message
-
-        IERC20(token).safeApprove(vault, amount);
-        IiTokenVaultPolygon(vault).fromMainnet(amount);
-
-        emit LogFromMainnet(
-            vault,
-            vault,
-            token,
-            amount
-        );
+    function batchProcessUpdateExchangePrice(uint256[] memory bridgeNonces) public {
+        for (uint256 i = 0; i < bridgeNonces.length; i++) {
+            processUpdateExchangePrice(bridgeNonces[i]);
+        }
     }
 
     function processFromMainnet(
-        address[] memory vaults,
-        address[] memory tokens,
-        uint256[] memory amounts
-    ) external /* OnlyRebalancer */ {
-        for (uint256 i = 0; i < vaults.length; i++) {
-            processFromMainnetSingle(
-                vaults[i],
-                tokens[i],
-                amounts[i]
+        uint256 bridgeNonce
+    ) public onlyRebalancer isBridgeNonceExecuted(bridgeNonce) {
+        StateData memory stateData_ = bridgeNonceToData[bridgeNonce];
+
+        if(stateData_.key == WITHDRAW_SINGLE) {
+            WithdrawData memory withdrawData_ = abi.decode(stateData_.data, (WithdrawData));
+            IERC20(withdrawData_.childToken).safeApprove(withdrawData_.childVault, withdrawData_.amount);
+            IiTokenVaultPolygon(withdrawData_.childVault).fromMainnet(withdrawData_.amount);
+            emit LogFromMainnet(
+                withdrawData_.rootVault,
+                withdrawData_.childVault,
+                withdrawData_.childToken,
+                withdrawData_.amount
+            );
+        } else if (stateData_.key == WITHDRAW_MULTI) { // TODO implement later
+            revert("LBP:[processWithdrawFromMainnet]:: WITHDRAW_MULTI not implemented yet");
+        } else {
+            revert("LBP:[processWithdrawFromMainnet]:: not update exchange price key");
+        }
+    }
+
+    function processBatchWithdrawFromMainnet(
+        uint256[] memory bridgeNonce
+    ) external {
+        for (uint256 i = 0; i < bridgeNonce.length; i++) {
+            processUpdateExchangePrice(
+                bridgeNonce[i]
             );
         }
     }
 
-    event LogToMainnet(
-        address indexed rootVault,
-        address indexed childVault,
-        address indexed token,
-        uint256 amont
-    );
-
-    function processToMainnet(
-        address vault,
+    function depositToMainnet(
+        address rootVault,
+        address childVault,
         address token,
         uint256 amount
-    ) public /* OnlyRebalancer */ {
-        // Add balance condition
+    ) public onlyRebalancer {
+        require(childToRootVault[childVault] == rootVault, "LBP:[depositToMainnet]:: root vault not same");
 
-        IChildVault(vault).toMainnet(amount);
+        IChildVault(childVault).toMainnet(amount);
         IChildChainManager(token).withdraw(amount);
 
-        // Emit event
-        emit LogToMainnet(
-            vault,
-            vault,
+        emit LogDepositToMainnet(
+            rootVault,
+            childVault,
             token,
             amount
         );
     }
 
+    receive() external payable {}
+
     constructor(address _fxChild) AdminModule(_fxChild) {}
+
+    function initialize(address owner_) public initializer {
+        __Ownable_init();
+        toggleRebalancer(owner_, true);
+        _transferOwnership(owner_);
+    }
 
 }

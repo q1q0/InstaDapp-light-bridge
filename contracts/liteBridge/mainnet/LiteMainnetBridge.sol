@@ -4,36 +4,31 @@ pragma solidity ^0.8.17;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "./Variables.sol";
 import "./interface/IiToken.sol";
 
-/*
- - Add Ownable logics
-*/
+import "./Variables.sol";
+import "./Events.sol";
 
 
-contract AdminModule is VariablesV1 {
-    event LogToggleRootToChildVaultMap(
-        address indexed rootVault,
-        address indexed childVault,
-        bool indexed add
-    );
-
-    event LogToggleRebalancer(
-        address indexed rebalancer,
-        bool indexed add
-    );
-
+contract AdminModule is VariablesV1, Events {
     modifier onlyRebalancer() {
         require(rebalancer[msg.sender], "LBM: not a rebalancer");
         _;
     }
 
+    function transferOwnership(address newOwner) public override virtual onlyOwner {
+        toggleRebalancer(owner(), false);
+        super.transferOwnership(newOwner);
+        toggleRebalancer(newOwner, true);
+    }
+
+    function renounceOwnership() public override virtual onlyOwner {}
+
     function toggleRootToChildVaultMap(
         address rootVault,
         address childVault,
         bool add
-    ) public /* onlyOwner */ {
+    ) public onlyOwner {
         if (add) {
             require(rootToChainVault[rootVault] == address(0), "LBM:[toggleRootToChainMap]:: Root to Child Mapping already added");
             rootToChainVault[rootVault] = childVault;
@@ -52,7 +47,7 @@ contract AdminModule is VariablesV1 {
     function toggleRebalancer(
         address rebalancerAddress,
         bool add
-    ) public /* onlyOwner */ {
+    ) public onlyOwner {
         if (add) {
             require(!rebalancer[rebalancerAddress], "LBM:[toggleRebalancer]:: rebalancerAddress already enabled");
             rebalancer[rebalancerAddress] = add;
@@ -89,28 +84,22 @@ contract LiteMainnetBridge is AdminModule {
         fxRoot.sendMessageToChild(address(this), message);
     }
 
-    event LogDeposit(
-        address indexed vault,
-        address indexed token,
-        uint256 amount
-    );
-
-
-    function deposit( // rename function
-        bytes memory inputData,
+    function processFromPolygon(
+        bytes memory polygonExitData,
         address vault,
         address token,
         uint256 amount
-    ) external /* onlyRebalancer */ {
-        rootChainManager.exit(inputData);
+    ) external onlyRebalancer {
+        rootChainManager.exit(polygonExitData);
         depositToVault(vault, token, amount);
+        emit LogFromPolygon(vault, token, amount); // TODO later: use RLP decoding to find out the token and amount from input data
     }
 
-    function depositToVault( // rename function
+    function depositToVault(
         address vault,
         address token,
         uint256 amount
-    ) public /* onlyRebalancer */ {
+    ) public onlyRebalancer {
         uint256 iTokenAmount_;
         if (token == NATIVE_TOKEN) {
             iTokenAmount_ = IiTokenVault(vault).supplyEth{value: amount}(address(this));
@@ -119,127 +108,133 @@ contract LiteMainnetBridge is AdminModule {
             iTokenAmount_ = IiTokenVault(vault).supply(token, amount, address(this));
         }
 
-
-        // optional - send exchangeRate to polygon of the vault
-
-        emit LogDeposit(
+        emit LogDepositToVault(
             vault,
             token,
             amount
         );
     }
 
-    event LogUpdateExchangePrice(
-        uint256 indexed bridgeNonce,
-        address indexed rootVault,
-        address indexed childVault,
-        uint256 exchangePrice
-    );
+    function updateExchangePrice(
+        address rootVault,
+        address childVault
+    ) public onlyRebalancer {
+        ExchangePriceData memory exchangePriceData;
 
-    function updateExchangeRate(
-        address[] memory rootVaults,
-        address[] memory childVaults
-    ) external /* onlyRebalancer */ {
-        uint256 length_ = rootVaults.length;
+        require(rootToChainVault[rootVault] == childVault, "LBM:[updateExchangeRate]:: root to child are not same");
+
+                                                    // mock 
+                                                    IiTokenVault(rootVault).updateExchangePrice();
+                                                    // mock
+
+        (exchangePriceData.exchangePrice, ) = IiTokenVault(rootVault).getCurrentExchangePrice();
+        exchangePriceData.rootVault = rootVault;
+        exchangePriceData.childVault = childVault;
+        _sendMessageToChild(
+            abi.encode(
+                UPDATE_EXCHANGE_PRICE_SINGLE,
+                ++bridgeNonce,
+                abi.encode(exchangePriceData)
+            )
+        );
+
+        emit LogUpdateExchangePrice(
+            bridgeNonce,
+            rootVault,
+            childVault,
+            exchangePriceData.exchangePrice
+        );
+    }
+
+    // @notice onlyRebalancer - is ran inside withdrawToPolygon function
+    function updateExchangePrice(
+        UpdateExchangePriceParams[] memory updateExchangePriceParams
+    ) external {
+        uint256 length_ = updateExchangePriceParams.length;
         for(uint256 i = 0; i < length_; i++) {
-            address rootVault_ = rootVaults[i];
-            address childVault_ = childVaults[i];
-            ExchangePriceData memory exchangePriceData;
-
-            require(rootToChainVault[rootVault_] == childVault_, "LBM:[updateExchangeRate]:: root to child are not same");
-
-                                                        // mock 
-                                                        IiTokenVault(rootVault_).updateExchangePrice();
-                                                        // mock
-
-            (exchangePriceData.exchangePrice, ) = IiTokenVault(rootVault_).getCurrentExchangePrice();
-            exchangePriceData.rootVault = rootVault_;
-            exchangePriceData.childVault = childVault_;
-            _sendMessageToChild(
-                abi.encode(
-                    UPDATE_EXCHANGE_PRICE_SINGLE,
-                    ++bridgeNonce,
-                    abi.encode(exchangePriceData)
-                )
-            );
-            emit LogUpdateExchangePrice(
-                bridgeNonce,
-                rootVault_,
-                childVault_,
-                exchangePriceData.exchangePrice
-            );
+            UpdateExchangePriceParams memory updateExchangePriceParams_ = updateExchangePriceParams[i];
+            updateExchangePrice(updateExchangePriceParams_.rootVault, updateExchangePriceParams_.childVault);
         }
     }
 
-    event LogWithdrawToPolygon(
-        uint256 indexed bridgeNonce,
-        address indexed rootVault,
-        address indexed childVault,
-        address token,
-        uint256 amount
-    );
-
-    function withdraw(
-        address[] memory rootVaults,
-        address[] memory childVaults,
-        address[] memory tokens,
-        uint256[] memory amounts,
+    function withdrawToPolygon(
+        address rootVault,
+        address childVault,
+        address token, 
+        uint256 amount,
         bytes memory oneInchSwapCalldata
-    ) external {
-        uint256 length_ = rootVaults.length;
-        for(uint256 i = 0; i < length_; i++) {
-            address rootVault_ = rootVaults[i];
-            address childVault_ = childVaults[i];
-            address token_ = tokens[i];
-            uint256 amount_ = amounts[i];
+    ) public onlyRebalancer returns(uint256 iTokenAmount) {
+        require(rootToChainVault[rootVault] == childVault, "LBM:[withdraw]:: root to child are not same");
 
-            require(rootToChainVault[rootVault_] == childVault_, "LBM:[withdraw]:: root to child are not same");
+        iTokenAmount = IiTokenVault(rootVault).withdraw(amount, address(this));
+        uint256 amount_ = amount;
+        if(token == NATIVE_TOKEN) {
+            uint256 stETHBalance_ = stETH.balanceOf(address(this));
+            uint256 ethBalance_ = address(this).balance;
+            if (stETHBalance_ > 0) {
+                stETH.safeApprove(oneInchAddress, stETHBalance_);
 
-            IiTokenVault(rootVault_).withdraw(amount_, address(this));
-            if(token_ == NATIVE_TOKEN) {
-                uint256 stETHBalance_ = stETH.balanceOf(address(this));
-                uint256 ethBalance_ = address(this).balance;
-                if (stETHBalance_ > 0) {
-                    // TODO: swap and depeg logics
-                    stETH.safeApprove(oneInchAddress, stETHBalance_);
+                // MOCK MOCK MOCK MOCK MOCK
+                // Address.functionCall(oneInchAddress, abi.encodeWithSignature("swap(uint256,address)", stETHBalance_, rootVault), "LBM:[withdraw]:: steth-1inch-swap-failed");
+                // MOCK MOCK MOCK MOCK MOCK
+                
+                Address.functionCall(oneInchAddress, oneInchSwapCalldata, "LBM:[withdraw]:: steth-1inch-swap-failed");
 
-                    Address.functionCall(oneInchAddress, abi.encodeWithSignature("swap(uint256,address)", stETHBalance_, rootVault_), "LBM:[withdraw]:: steth-1inch-swap-failed"); // MOCK
-                    // Address.functionCall(oneInchAddress, oneInchSwapCalldata, "LBM:[withdraw]:: steth-1inch-swap-failed");
+                uint256 ethBalanceAfterSwap_ = address(this).balance;
+                uint256 ethAmountFromSwap_ = ethBalanceAfterSwap_ - ethBalance_;
+                ethBalance_ = ethBalanceAfterSwap_;
 
-                    uint256 ethBalanceAfterSwap_ = address(this).balance;
-                    uint256 ethAmountFromSwap_ = ethBalanceAfterSwap_ - ethBalance_;
-                    ethBalance_ = ethBalanceAfterSwap_;
+                uint256 depegPercentage_ = ethAmountFromSwap_ * 1e4 / stETHBalance_;
 
-                    uint256 depegPercentage_ = ethAmountFromSwap_ * 1e4 / stETHBalance_;
-
-                    require(depegPercentage_ >= 0.995 * 1e4, "steth-high-depeg"); // 0.5% depeg  // TODO: move it
-                }
-                amount_ = ethBalance_;
-
-                rootChainManager.depositEtherFor{value: ethBalance_}(address(this));
-            } else {
-                IERC20(token_).safeApprove(address(rootChainManager), amount_);
-                rootChainManager.depositFor(address(this), token_, abi.encode(amount_));
+                require(depegPercentage_ >= 0.95 * 1e4, "steth-high-depeg"); // 5% depeg  // TODO: add better logics later
             }
+            amount_ = ethBalance_;
 
-            _sendMessageToChild(
-                abi.encode(
-                    WITHDRAW_SINGLE,
-                    ++bridgeNonce,
-                    abi.encode(0x00)
-                )
-            );
+            rootChainManager.depositEtherFor{value: ethBalance_}(address(this));
+        } else {
+            IERC20(token).safeApprove(address(rootChainManager), amount);
+            rootChainManager.depositFor(address(this), token, abi.encode(amount));
+        }
 
-            emit LogWithdrawToPolygon(
-                bridgeNonce,
-                rootVault_,
-                childVaults[i],
-                token_,
-                amount_
+        WithdrawData memory withdrawData_ = WithdrawData(
+            rootVault,
+            childVault,
+            token,
+            rootChainManager.rootToChildToken(token),
+            amount_
+        );
+
+        _sendMessageToChild(
+            abi.encode(
+                WITHDRAW_SINGLE,
+                ++bridgeNonce,
+                abi.encode(withdrawData_)
+            )
+        );
+
+        emit LogWithdrawToPolygon(
+            bridgeNonce,
+            rootVault,
+            childVault,
+            token,
+            amount_
+        );
+    }  
+
+    // @notice onlyRebalancer - is ran inside withdrawToPolygon function
+    function batchWithdrawToPolygon(BatchWithdrawParams[] memory batchWithdrawParams) external returns(uint256[] memory iTokenAmounts) {
+        uint256 length_ = batchWithdrawParams.length;
+        iTokenAmounts = new uint256[](length_);
+        for (uint256 i = 0; i < length_; i++) {
+            BatchWithdrawParams memory batchWithdrawParams_ = batchWithdrawParams[i];
+            iTokenAmounts[i] = withdrawToPolygon(
+                batchWithdrawParams_.rootVault,
+                batchWithdrawParams_.childVault,
+                batchWithdrawParams_.token,
+                batchWithdrawParams_.amount,
+                batchWithdrawParams_.oneInchSwapCalldata
             );
         }
-        
-        // optional - send exchangeRate to polygon of the vault
     }
 
     receive() external payable {}
@@ -257,4 +252,10 @@ contract LiteMainnetBridge is AdminModule {
         _stETH,
         _oneInchAddress
     ) {}
+
+    function initialize(address owner_) public initializer {
+        __Ownable_init();
+        toggleRebalancer(owner_, true);
+        _transferOwnership(owner_);
+    }
 }
