@@ -12,7 +12,7 @@ import "./interface/IFxMessageProcessor.sol";
 import "../common/Common.sol";
 
 
-contract VariablesV1 is Common {
+contract VariablesV1 is Common, Initializable, OwnableUpgradeable {
     // state sender contract child
     IFxMessageProcessor public immutable fxChild;
 
@@ -43,5 +43,6 @@ contract VariablesV1 is Common {
 
     constructor(address _fxChild) {
         fxChild = IFxMessageProcessor(_fxChild);
+        _disableInitializers();
     }
 }

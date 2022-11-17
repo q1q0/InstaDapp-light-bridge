@@ -71,6 +71,12 @@ abstract contract AdminModule is FxBaseChildTunnel {
         bool indexed add
     );
 
+    function transferOwnership(address newOwner) public override virtual onlyOwner {
+        toggleRebalancer(owner(), false);
+        super.transferOwnership(newOwner);
+        toggleRebalancer(newOwner, true);
+    }
+
     modifier onlyRebalancer() {
         require(rebalancer[msg.sender], "LBP: not a rebalancer");
         _;
@@ -241,5 +247,11 @@ contract LitePolygonBridge is AdminModule {
     }
 
     constructor(address _fxChild) AdminModule(_fxChild) {}
+
+    function initialize(address owner_) public initializer {
+        __Ownable_init();
+        toggleRebalancer(owner_, true);
+        _transferOwnership(owner_);
+    }
 
 }
