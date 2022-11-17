@@ -9,8 +9,9 @@ import "./interface/IChildVault.sol";
 import "./interface/IiTokenPolygon.sol";
 
 import "./Variables.sol";
+import "./Events.sol";
 
-abstract contract FxBaseChildTunnel is VariablesV1 {
+abstract contract FxBaseChildTunnel is VariablesV1, Events {
     // MessageTunnel on L1 will get data from this event
     event MessageSent(bytes message);
 
@@ -128,18 +129,6 @@ contract LitePolygonBridge is AdminModule {
 
     receive() external payable {}
 
-    event LogUpdatedExchangePrice(
-        uint256 indexed id,
-        address indexed vault,
-        uint256 exchangePrice
-    );
-
-    event LogMessageReceived (
-        uint256 indexed stateId,
-        uint256 indexed bridgeNonce,
-        bytes32 indexed key
-    );
-
     function _processMessageFromRoot(
         uint256 stateId,
         address sender,
@@ -180,14 +169,6 @@ contract LitePolygonBridge is AdminModule {
         }
     }
 
-
-    event LogFromMainnet(
-        address indexed rootVault,
-        address indexed childVault,
-        address indexed token,
-        uint256 amont
-    );
-
     function processFromMainnetSingle(
         address vault,
         address token,
@@ -219,13 +200,6 @@ contract LitePolygonBridge is AdminModule {
             );
         }
     }
-
-    event LogToMainnet(
-        address indexed rootVault,
-        address indexed childVault,
-        address indexed token,
-        uint256 amont
-    );
 
     function processToMainnet(
         address vault,
