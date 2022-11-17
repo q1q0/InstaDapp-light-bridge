@@ -21,11 +21,7 @@ async function main() {
   console.log("Deployed DummyImpl to", DummyImpl.address);
 
   console.log(
-    "\n Deploying Lite Bridge contracts deterministically \n ---------------------"
-  );
-
-  console.log(
-    "\n Deploying Dummy Impl deterministically \n ---------------------"
+    "\n Deploying LiteProxyAdmin deterministically \n ---------------------"
   );
 
   const LiteProxyAdmin = await deploy("LiteProxyAdmin", {
