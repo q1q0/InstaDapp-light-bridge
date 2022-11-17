@@ -2,6 +2,17 @@
 pragma solidity ^0.8.17;
 
 contract Events {
+    event LogToggleChildToRootVaultMap(
+        address indexed rootVault,
+        address indexed childVault,
+        bool indexed add
+    );
+
+    event LogToggleRebalancer(
+        address indexed rebalancer,
+        bool indexed add
+    );
+
     event LogFromMainnet(
         address indexed rootVault,
         address indexed childVault,

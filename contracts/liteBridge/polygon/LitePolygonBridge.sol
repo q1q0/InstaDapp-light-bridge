@@ -61,17 +61,6 @@ abstract contract FxBaseChildTunnel is VariablesV1, Events {
 }
 
 abstract contract AdminModule is FxBaseChildTunnel {
-    event LogToggleChildToRootVaultMap(
-        address indexed rootVault,
-        address indexed childVault,
-        bool indexed add
-    );
-
-    event LogToggleRebalancer(
-        address indexed rebalancer,
-        bool indexed add
-    );
-
     function transferOwnership(address newOwner) public override virtual onlyOwner {
         toggleRebalancer(owner(), false);
         super.transferOwnership(newOwner);
