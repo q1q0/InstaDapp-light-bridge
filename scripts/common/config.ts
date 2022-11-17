@@ -59,7 +59,7 @@ const CONFIG: Record<string, Record<string, string | any>> =  {
             "1inch": MOCK_DEX["1"]
         },
         "5": {
-            "rootChainManagerProxy": "0xBbD7cBFA79faee899Eaf900F13C9065bF03B1A74",
+            "rootChainManagerProxy": "0xA0c68C638235ee32657e8f720a23ceC1bFc77C77",
             "fxRoot": "0x3d1d3E34f7fB6D26245E6640E1c50710eFFf15bA",
             "weth": "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6",
             "steth": "0x2DD6530F136D2B56330792D46aF959D9EA62E276",
