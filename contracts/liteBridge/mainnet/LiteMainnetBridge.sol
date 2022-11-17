@@ -246,7 +246,7 @@ contract LiteMainnetBridge is AdminModule {
 
     function batchWithdrawToPolygon(BatchWithdrawParams[] memory batchWithdrawParams) external returns(uint256[] memory iTokenAmounts) {
         uint256 length_ = batchWithdrawParams.length;
-        iTokenAmounts = new uint256[](iTokenAmounts);
+        iTokenAmounts = new uint256[](length_);
         for (uint256 i = 0; i < length_; i++) {
             BatchWithdrawParams memory batchWithdrawParams_ = batchWithdrawParams[i];
             iTokenAmounts[i] = withdrawToPolygon(
