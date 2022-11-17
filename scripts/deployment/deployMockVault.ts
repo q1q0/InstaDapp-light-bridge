@@ -99,7 +99,7 @@ async function main() {
     const mockLiteVaultChildArgsToken = [
       CONFIG.TOKEN_ADDRESS[chainId],
       CONFIG.LITE_BRIDGE[chainId],
-      true
+      false
     ]
 
     const mockLiteVaultChildArgs = isETH ? mockLiteVaultChildArgsEth : mockLiteVaultChildArgsToken;
