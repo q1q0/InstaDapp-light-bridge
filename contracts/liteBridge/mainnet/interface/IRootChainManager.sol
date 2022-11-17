@@ -6,6 +6,7 @@ interface IRootChainManager {
     function depositEtherFor(address user) external payable;
     function exit(bytes calldata inputData) external;
     function childToRootToken(address) external view returns(address);
+    function rootToChildToken(address) external view returns(address);
     function tokenToType(address) external view returns(bytes32);
     function typeToPredicate(bytes32) external view returns(address);
     function depositFor(
