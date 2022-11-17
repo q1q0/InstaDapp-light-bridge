@@ -29,6 +29,12 @@ contract AdminModule is VariablesV1 {
         _;
     }
 
+    function transferOwnership(address newOwner) public override virtual onlyOwner {
+        toggleRebalancer(owner(), false);
+        super.transferOwnership(newOwner);
+        toggleRebalancer(newOwner, true);
+    }
+
     function toggleRootToChildVaultMap(
         address rootVault,
         address childVault,
@@ -89,24 +95,30 @@ contract LiteMainnetBridge is AdminModule {
         fxRoot.sendMessageToChild(address(this), message);
     }
 
-    event LogDeposit(
+    event LogDepositToVault(
         address indexed vault,
         address indexed token,
         uint256 amount
     );
 
+    event LogFromPolygon(
+        address indexed token,
+        uint256 amount
+    );
 
-    function deposit( // rename function
-        bytes memory inputData,
+
+    function depositToVaultFromPolygon(
+        bytes memory polygonExitData,
         address vault,
         address token,
         uint256 amount
     ) external /* onlyRebalancer */ {
-        rootChainManager.exit(inputData);
+        rootChainManager.exit(polygonExitData);
+        emit LogFromPolygon(token, amount); // TODO later: use RLP decoding to find out the token and amount from input data
         depositToVault(vault, token, amount);
     }
 
-    function depositToVault( // rename function
+    function depositToVault(
         address vault,
         address token,
         uint256 amount
@@ -119,10 +131,7 @@ contract LiteMainnetBridge is AdminModule {
             iTokenAmount_ = IiTokenVault(vault).supply(token, amount, address(this));
         }
 
-
-        // optional - send exchangeRate to polygon of the vault
-
-        emit LogDeposit(
+        emit LogDepositToVault(
             vault,
             token,
             amount
@@ -179,67 +188,87 @@ contract LiteMainnetBridge is AdminModule {
         uint256 amount
     );
 
-    function withdraw(
-        address[] memory rootVaults,
-        address[] memory childVaults,
-        address[] memory tokens,
-        uint256[] memory amounts,
+    function withdrawToPolygon(
+        address rootVault,
+        address childVault,
+        address token, 
+        uint256 amount,
         bytes memory oneInchSwapCalldata
-    ) external {
-        uint256 length_ = rootVaults.length;
-        for(uint256 i = 0; i < length_; i++) {
-            address rootVault_ = rootVaults[i];
-            address childVault_ = childVaults[i];
-            address token_ = tokens[i];
-            uint256 amount_ = amounts[i];
+    ) public returns(uint256 iTokenAmount) {
+        require(rootToChainVault[rootVault] == childVault, "LBM:[withdraw]:: root to child are not same");
 
-            require(rootToChainVault[rootVault_] == childVault_, "LBM:[withdraw]:: root to child are not same");
+        iTokenAmount = IiTokenVault(rootVault).withdraw(amount, address(this));
+        uint256 amount_ = amount;
+        if(token == NATIVE_TOKEN) {
+            uint256 stETHBalance_ = stETH.balanceOf(address(this));
+            uint256 ethBalance_ = address(this).balance;
+            if (stETHBalance_ > 0) {
+                stETH.safeApprove(oneInchAddress, stETHBalance_);
 
-            IiTokenVault(rootVault_).withdraw(amount_, address(this));
-            if(token_ == NATIVE_TOKEN) {
-                uint256 stETHBalance_ = stETH.balanceOf(address(this));
-                uint256 ethBalance_ = address(this).balance;
-                if (stETHBalance_ > 0) {
-                    // TODO: swap and depeg logics
-                    stETH.safeApprove(oneInchAddress, stETHBalance_);
+                // Address.functionCall(oneInchAddress, abi.encodeWithSignature("swap(uint256,address)", stETHBalance_, rootVault), "LBM:[withdraw]:: steth-1inch-swap-failed"); // MOCK
+                
+                Address.functionCall(oneInchAddress, oneInchSwapCalldata, "LBM:[withdraw]:: steth-1inch-swap-failed");
 
-                    Address.functionCall(oneInchAddress, abi.encodeWithSignature("swap(uint256,address)", stETHBalance_, rootVault_), "LBM:[withdraw]:: steth-1inch-swap-failed"); // MOCK
-                    // Address.functionCall(oneInchAddress, oneInchSwapCalldata, "LBM:[withdraw]:: steth-1inch-swap-failed");
+                uint256 ethBalanceAfterSwap_ = address(this).balance;
+                uint256 ethAmountFromSwap_ = ethBalanceAfterSwap_ - ethBalance_;
+                ethBalance_ = ethBalanceAfterSwap_;
 
-                    uint256 ethBalanceAfterSwap_ = address(this).balance;
-                    uint256 ethAmountFromSwap_ = ethBalanceAfterSwap_ - ethBalance_;
-                    ethBalance_ = ethBalanceAfterSwap_;
+                uint256 depegPercentage_ = ethAmountFromSwap_ * 1e4 / stETHBalance_;
 
-                    uint256 depegPercentage_ = ethAmountFromSwap_ * 1e4 / stETHBalance_;
-
-                    require(depegPercentage_ >= 0.995 * 1e4, "steth-high-depeg"); // 0.5% depeg  // TODO: move it
-                }
-                amount_ = ethBalance_;
-
-                rootChainManager.depositEtherFor{value: ethBalance_}(address(this));
-            } else {
-                IERC20(token_).safeApprove(address(rootChainManager), amount_);
-                rootChainManager.depositFor(address(this), token_, abi.encode(amount_));
+                require(depegPercentage_ >= 0.90 * 1e4, "steth-high-depeg"); // 10% depeg  // TODO: add better logics later
             }
+            amount_ = ethBalance_;
 
-            _sendMessageToChild(
-                abi.encode(
-                    WITHDRAW_SINGLE,
-                    ++bridgeNonce,
-                    abi.encode(0x00)
-                )
-            );
+            rootChainManager.depositEtherFor{value: ethBalance_}(address(this));
+        } else {
+            IERC20(token).safeApprove(address(rootChainManager), amount);
+            rootChainManager.depositFor(address(this), token, abi.encode(amount));
+        }
 
-            emit LogWithdrawToPolygon(
-                bridgeNonce,
-                rootVault_,
-                childVaults[i],
-                token_,
-                amount_
+        WithdrawData memory withdrawData_ = WithdrawData(
+            rootVault,
+            childVault,
+            amount_
+        );
+
+        _sendMessageToChild(
+            abi.encode(
+                WITHDRAW_SINGLE,
+                ++bridgeNonce,
+                abi.encode(withdrawData_)
+            )
+        );
+
+        emit LogWithdrawToPolygon(
+            bridgeNonce,
+            rootVault,
+            childVault,
+            token,
+            amount_
+        );
+    }  
+
+    struct BatchWithdrawParams {
+        address rootVault;
+        address childVault;
+        address token;
+        uint256 amount;
+        bytes oneInchSwapCalldata;
+    }
+
+    function batchWithdrawToPolygon(BatchWithdrawParams[] memory batchWithdrawParams) external returns(uint256[] memory iTokenAmounts) {
+        uint256 length_ = batchWithdrawParams.length;
+        iTokenAmounts = new uint256[](iTokenAmounts);
+        for (uint256 i = 0; i < length_; i++) {
+            BatchWithdrawParams memory batchWithdrawParams_ = batchWithdrawParams[i];
+            iTokenAmounts[i] = withdrawToPolygon(
+                batchWithdrawParams_.rootVault,
+                batchWithdrawParams_.childVault,
+                batchWithdrawParams_.token,
+                batchWithdrawParams_.amount,
+                batchWithdrawParams_.oneInchSwapCalldata
             );
         }
-        
-        // optional - send exchangeRate to polygon of the vault
     }
 
     receive() external payable {}
@@ -257,4 +286,10 @@ contract LiteMainnetBridge is AdminModule {
         _stETH,
         _oneInchAddress
     ) {}
+
+    function initialize(address owner_) public initializer {
+        __Ownable_init();
+        toggleRebalancer(owner_, true);
+        _transferOwnership(owner_);
+    }
 }
