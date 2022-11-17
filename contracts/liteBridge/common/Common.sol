@@ -15,6 +15,20 @@ contract Structs {
        address childVault;
        uint256 amount;
     }
+
+    struct StateData {
+        uint8 isExecuted;
+        bytes32 key;
+        bytes data;
+    }
+
+    struct BatchWithdrawParams {
+        address rootVault;
+        address childVault;
+        address token;
+        uint256 amount;
+        bytes oneInchSwapCalldata;
+    }
 }
 
 contract Common is Structs {

@@ -7,10 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./Variables.sol";
 import "./interface/IiToken.sol";
 
-/*
- - Add Ownable logics
-*/
-
 
 contract AdminModule is VariablesV1 {
     event LogToggleRootToChildVaultMap(
@@ -247,14 +243,6 @@ contract LiteMainnetBridge is AdminModule {
             amount_
         );
     }  
-
-    struct BatchWithdrawParams {
-        address rootVault;
-        address childVault;
-        address token;
-        uint256 amount;
-        bytes oneInchSwapCalldata;
-    }
 
     function batchWithdrawToPolygon(BatchWithdrawParams[] memory batchWithdrawParams) external returns(uint256[] memory iTokenAmounts) {
         uint256 length_ = batchWithdrawParams.length;
