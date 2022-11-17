@@ -198,7 +198,7 @@ contract LitePolygonBridge is AdminModule {
         address childVault,
         address token,
         uint256 amount
-    ) public OnlyRebalancer {
+    ) public onlyRebalancer {
         require(childToRootVault[childVault] == rootVault, "LBP:[depositToMainnet]:: root vault not same");
 
         IChildVault(childVault).toMainnet(amount);
