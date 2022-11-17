@@ -230,6 +230,8 @@ contract LiteMainnetBridge is AdminModule {
         WithdrawData memory withdrawData_ = WithdrawData(
             rootVault,
             childVault,
+            token,
+            rootChainManager.rootToChildToken(token),
             amount_
         );
 
