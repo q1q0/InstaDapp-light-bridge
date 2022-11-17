@@ -59,7 +59,7 @@ async function main() {
 
     const mockLiteVaultRoot = await deployContract('MockLiteVaultRoot', mockLiteVaultRootArgs)
     const mockLiteVaultRootInitialiseCalldata = (await mockLiteVaultRoot.populateTransaction.initialize(...tokenDetails)).data
-    const mockProxy = await deployContract('MockProxy', [mockLiteVaultRoot.address, liteProxyAdmin.address, mockLiteVaultRootInitialiseCalldata], [], 4)
+    const mockProxy = await deployContract('MockProxy', [mockLiteVaultRoot.address, liteProxyAdmin.address, mockLiteVaultRootInitialiseCalldata], [], 3)
 
     if (hre.network.name !== 'hardhat') {
       try {
