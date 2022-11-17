@@ -2,7 +2,6 @@
 pragma solidity ^0.8.17;
 
 interface IiTokenVault {
-   // TODO: add mainnet functions
     function supply(
         address token_,
         uint256 amount_,
@@ -12,7 +11,7 @@ interface IiTokenVault {
     function withdraw(uint256 amount_, address to_) external returns(uint256);
     function getCurrentExchangePrice() external view returns(uint256, uint256);
 
-    // Mock
-
+    // MOCK MOCK MOCK MOCK
     function updateExchangePrice() external returns(uint256);
+    // MOCK MOCK MOCK MOCK
 }
