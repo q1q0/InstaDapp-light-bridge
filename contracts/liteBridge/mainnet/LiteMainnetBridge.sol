@@ -171,11 +171,6 @@ contract LiteMainnetBridge is AdminModule {
         );
     }
 
-    struct UpdateExchangePriceParams {
-        address rootVault;
-        address childVault;
-    }
-
     // @notice onlyRebalancer - is ran inside withdrawToPolygon function
     function updateExchangePrice(
         UpdateExchangePriceParams[] memory updateExchangePriceParams

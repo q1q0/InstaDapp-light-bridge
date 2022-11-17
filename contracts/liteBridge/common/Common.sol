@@ -29,6 +29,11 @@ contract Structs {
         uint256 amount;
         bytes oneInchSwapCalldata;
     }
+
+    struct UpdateExchangePriceParams {
+        address rootVault;
+        address childVault;
+    }
 }
 
 contract Common is Structs {
